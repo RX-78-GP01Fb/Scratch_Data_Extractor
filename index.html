@@ -237,10 +237,10 @@
         <div class="win-titlebar">
             <div class="flex items-center gap-1.5 text-xs">
                 <i class="fa-solid fa-compact-disc text-amber-300"></i>
-                <span>Scratch Studio Data Extractor v1.0 - [Untitled Studio]</span>
+                <span>Scratch Data Extractor v1.0 - [Untitled Studio]</span>
             </div>
             <div class="flex items-center gap-1">
-                <button class="win-title-btn" onclick="alert('Scratch Studio Extractor v1.0\nClassic Windows Edition')">?</button>
+                <button class="win-title-btn" onclick="alert('Scratch Data Extractor \nClassic Windows Edition')">?</button>
                 <button class="win-title-btn" onclick="location.reload()">_</button>
                 <button class="win-title-btn" onclick="location.reload()">×</button>
             </div>
@@ -251,7 +251,7 @@
             <span class="hover:bg-[#000080] hover:text-white px-1.5 py-0.5 cursor-pointer" onclick="document.getElementById('studioIdInput').focus()">ファイル(F)</span>
             <span class="hover:bg-[#000080] hover:text-white px-1.5 py-0.5 cursor-pointer" onclick="downloadCombinedCsv()">データ出力(E)</span>
             <span class="hover:bg-[#000080] hover:text-white px-1.5 py-0.5 cursor-pointer" onclick="resetForm()">クリア(C)</span>
-            <span class="hover:bg-[#000080] hover:text-white px-1.5 py-0.5 cursor-pointer" onclick="alert('【Scratch Studio Data Extractor】\nスタジオIDを入力して「一括取得」ボタンを押すと、すべてのデータを抽出してCSV/JSONで出力できます。')">ヘルプ(H)</span>
+            <span class="hover:bg-[#000080] hover:text-white px-1.5 py-0.5 cursor-pointer" onclick="alert('【Scratch Data Extractor】\nスタジオIDを入力して「一括取得」ボタンを押すと、すべてのデータを抽出してCSV/JSONで出力できます。')">ヘルプ(H)</span>
         </div>
 
         <!-- Main Workspace -->
@@ -699,7 +699,7 @@
             badge.classList.remove('hidden');
 
             // Title Bar Text
-            document.querySelector('.win-titlebar span').innerText = `Scratch Studio Data Extractor - [${fetchedData.meta.title}]`;
+            document.querySelector('.win-titlebar span').innerText = `Scratch Data Extractor - [${fetchedData.meta.title}]`;
 
             // Tab Counters
             document.getElementById('tab-projects').innerText = `プロジェクト (${fetchedData.projects.length})`;
