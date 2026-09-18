@@ -8,7 +8,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome for classic style icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
+
     <style>
         /* 1990s - 2000s Classic Windows GUI Design System */
         :root {
@@ -165,10 +165,10 @@
             transition: width 0.15s linear;
             /* Creates the classic Windows 95/98 block segment style */
             background-image: linear-gradient(
-                90deg, 
-                transparent 0px, 
-                transparent 7px, 
-                var(--win-field-bg) 7px, 
+                90deg,
+                transparent 0px,
+                transparent 7px,
+                var(--win-field-bg) 7px,
                 var(--win-field-bg) 9px
             );
             background-size: 9px 10px;
@@ -232,7 +232,7 @@
 
     <!-- Main Software Window Frame -->
     <div class="win-outset max-w-5xl w-full flex flex-col shadow-2xl" style="min-height: 620px;">
-        
+
         <!-- Window Titlebar -->
         <div class="win-titlebar">
             <div class="flex items-center gap-1.5 text-xs">
@@ -260,7 +260,7 @@
             <!-- Control Box / Input Group (Group Box Style) -->
             <fieldset class="win-outset p-3 relative">
                 <legend class="text-xs font-bold px-1 bg-[#c0c0c0] -top-2.5 left-2 absolute">スタジオ指定と設定</legend>
-                
+
                 <div class="grid grid-cols-1 lg:grid-cols-12 gap-3 items-center mt-1">
                     <!-- Studio ID / URL -->
                     <div class="lg:col-span-6 flex flex-col gap-1">
@@ -268,7 +268,7 @@
                             <span>スタジオID または URL:</span>
                         </label>
                         <div class="flex gap-2">
-                            <input type="text" id="studioIdInput" placeholder="例: 32832822 または https://scratch.mit.edu/studios/32832822" 
+                            <input type="text" id="studioIdInput" placeholder="例: 32832822 または https://scratch.mit.edu/studios/32832822"
                                    class="win-inset flex-1 px-2 py-1 text-xs outline-none focus:bg-yellow-50 font-mono">
                             <button class="win-btn" onclick="document.getElementById('studioIdInput').value=''">消去</button>
                         </div>
@@ -326,7 +326,7 @@
                     <span>抽出データ表示ウィンドウ</span>
                     <span id="studioBadge" class="bg-white px-2 py-0.5 border border-gray-500 font-mono text-[10px] hidden"></span>
                 </div>
-                
+
                 <div class="flex items-center gap-1">
                     <button id="btnExportJson" class="win-btn" disabled onclick="downloadJson()">
                         <i class="fa-solid fa-file-code"></i> JSON保存
@@ -353,7 +353,7 @@
 
                 <!-- Tab Display Windows -->
                 <div class="win-inset flex-1 p-2 overflow-auto bg-white min-h-[260px]">
-                    
+
                     <!-- 1. Summary View -->
                     <div id="view-summary" class="tab-view space-y-4 text-xs">
                         <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -501,6 +501,9 @@
 
     <!-- Application Script Logic -->
     <script>
+        // Scratch API is accessed through a server-side proxy to avoid browser CORS restrictions.
+        // Replace this URL with the deployed Cloudflare Worker URL.
+        const API_BASE = "https://YOUR-WORKER.workers.dev";
         let isFetching = false;
         let cancelRequested = false;
 
@@ -577,7 +580,7 @@
             cancelRequested = false;
             document.getElementById('fetchBtn').disabled = true;
             document.getElementById('cancelBtn').classList.remove('hidden');
-            
+
             fetchedData = {
                 meta: { id: studioId, fetchedAt: new Date().toISOString() },
                 projects: [],
@@ -590,7 +593,7 @@
             try {
                 // Step 1: Verify & Fetch Studio Metadata
                 setProgress(5, `スタジオ (${studioId}) のメタデータを取得中...`);
-                const metaRes = await fetch(`https://api.scratch.mit.edu/studios/${studioId}`);
+                const metaRes = await fetch(`${API_BASE}/studios/${studioId}`);
                 if (!metaRes.ok) {
                     throw new Error(`スタジオの取得に失敗しました (HTTP Status: ${metaRes.status})`);
                 }
@@ -626,7 +629,7 @@
                         const progressPct = 10 + (completedTasks * weightPerTask);
                         setProgress(progressPct, `${taskLabel} 取得中: ${count} 件完了 (offset: ${offset})...`);
 
-                        const res = await fetch(`https://api.scratch.mit.edu/studios/${studioId}/${task}?limit=40&offset=${offset}`);
+                        const res = await fetch(`${API_BASE}/studios/${studioId}/${task}?limit=40&offset=${offset}`);
                         if (!res.ok) break;
 
                         const items = await res.json();
@@ -722,7 +725,7 @@
 
             // Projects Table
             const projTbody = document.getElementById('tableProjectsBody');
-            projTbody.innerHTML = fetchedData.projects.length === 0 ? 
+            projTbody.innerHTML = fetchedData.projects.length === 0 ?
                 '<tr><td colspan="4" class="text-center text-gray-500 py-4">データがありません</td></tr>' :
                 fetchedData.projects.map(p => `
                     <tr>
@@ -749,11 +752,11 @@
             document.getElementById('cntManagers').innerText = `${fetchedData.managers.length}名`;
             document.getElementById('cntCurators').innerText = `${fetchedData.curators.length}名`;
 
-            document.getElementById('listManagers').innerHTML = fetchedData.managers.length === 0 ? 
+            document.getElementById('listManagers').innerHTML = fetchedData.managers.length === 0 ?
                 '<div class="text-gray-400">なし</div>' :
                 fetchedData.managers.map(m => `<div>• ${escapeHtml(m)}</div>`).join('');
 
-            document.getElementById('listCurators').innerHTML = fetchedData.curators.length === 0 ? 
+            document.getElementById('listCurators').innerHTML = fetchedData.curators.length === 0 ?
                 '<div class="text-gray-400">なし</div>' :
                 fetchedData.curators.map(c => `<div>• ${escapeHtml(c)}</div>`).join('');
 
