@@ -13,7 +13,7 @@
         <div class="win-titlebar">
             <div class="flex items-center gap-1.5 text-xs">
                 <i class="fa-solid fa-compact-disc text-amber-300"></i>
-                <span>Scratch Data Extractor v1.0 - [Untitled Studio]</span>
+                <span>Scratch Data Extractor v1.0</span>
             </div>
             <div class="flex items-center gap-1">
                 <button class="win-title-btn" onclick="alert('Scratch Data Extractor')">?</button>
@@ -27,7 +27,7 @@
             <span class="hover:bg-[#000080] hover:text-white px-1.5 py-0.5 cursor-pointer" onclick="resetForm()">クリア(C)</span>
             <span class="hover:bg-[#000080] hover:text-white px-1.5 py-0.5 cursor-pointer" onclick="alert('ヘルプ')">ヘルプ(H)</span>
         </div>
-        <div class="p-3 flex-1 flex flex-col gap-3">
+        <div class="p-3 flex-1 flex flex-col gap-3 min-h-0">
             <fieldset class="win-outset p-3 relative">
                 <legend class="text-xs font-bold px-1 bg-[#c0c0c0] -top-2.5 left-2 absolute">スタジオ指定と設定</legend>
                 <div class="grid grid-cols-1 lg:grid-cols-12 gap-3 items-center mt-1">
@@ -73,7 +73,7 @@
                     <button class="win-tab-btn" onclick="switchTab('members')" id="tab-members">メンバー (0)</button>
                     <button class="win-tab-btn" onclick="switchTab('activity')" id="tab-activity">活動内容 (0)</button>
                 </div>
-                <div class="win-inset flex-1 p-2 overflow-auto bg-white min-h-[260px]">
+                <div class="win-inset flex-1 p-2 overflow-auto bg-white min-h-0">
                     <div id="view-summary" class="tab-view space-y-4 text-xs">
                         <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
                             <div class="win-inset-panel p-2"><div>プロジェクト数:</div><div id="statProjects" class="text-lg font-bold text-blue-900 font-mono">0</div></div>
@@ -94,7 +94,7 @@
                     </div>
                     <div id="view-projects" class="tab-view hidden space-y-2">
                         <div class="flex justify-between items-center text-xs"><span>登録プロジェクト一覧</span><button class="win-btn text-[10px]" onclick="downloadSectionCsv('projects')">CSV出力</button></div>
-                        <div class="win-inset overflow-auto max-h-[300px]">
+                        <div class="win-inset overflow-auto flex-1 min-h-0">
                             <table class="w-full text-xs retro-table font-mono">
                                 <thead><tr><th class="w-20">ID</th><th>作品タイトル</th><th class="w-32">追加者</th><th class="w-20 text-center">リンク</th></tr></thead>
                                 <tbody id="tableProjectsBody"><tr><td colspan="4" class="text-center text-gray-500 py-4">データなし</td></tr></tbody>
@@ -103,7 +103,7 @@
                     </div>
                     <div id="view-comments" class="tab-view hidden space-y-2">
                         <div class="flex justify-between items-center text-xs"><span>スタジオコメント一覧</span><button class="win-btn text-[10px]" onclick="downloadSectionCsv('comments')">CSV出力</button></div>
-                        <div class="win-inset overflow-auto max-h-[300px]">
+                        <div class="win-inset overflow-auto flex-1 min-h-0">
                             <table class="w-full text-xs retro-table font-sans">
                                 <thead><tr><th class="w-32">投稿者</th><th>コメント内容</th><th class="w-36">日時</th></tr></thead>
                                 <tbody id="tableCommentsBody"><tr><td colspan="3" class="text-center text-gray-500 py-4">データなし</td></tr></tbody>
@@ -111,23 +111,23 @@
                         </div>
                     </div>
                     <div id="view-members" class="tab-view hidden space-y-2">
-                        <div class="flex justify-between items-center text-xs"><span>所属マネージャー/キュレーター</span><button class="win-btn text-[10px]" onclick="downloadSectionTxt('members')">TXT出力</button></div>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                            <div class="win-outset p-2 space-y-2">
+                        <div class="flex justify-between items-center text-xs"><span>所属メンバー</span><button class="win-btn text-[10px]" onclick="downloadSectionTxt('members')">TXT出力</button></div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs flex-1 min-h-0">
+                            <div class="win-outset p-2 space-y-2 flex flex-col min-h-0">
                                 <div class="font-bold border-b border-gray-400 pb-1 flex justify-between"><span>マネージャー</span><span id="cntManagers" class="font-mono">0名</span></div>
-                                <div id="listManagers" class="win-inset p-1 max-h-56 overflow-y-auto space-y-1 font-mono"></div>
+                                <div id="listManagers" class="win-inset p-1 flex-1 overflow-y-auto space-y-1 font-mono"></div>
                             </div>
-                            <div class="win-outset p-2 space-y-2">
+                            <div class="win-outset p-2 space-y-2 flex flex-col min-h-0">
                                 <div class="font-bold border-b border-gray-400 pb-1 flex justify-between"><span>キュレーター</span><span id="cntCurators" class="font-mono">0名</span></div>
-                                <div id="listCurators" class="win-inset p-1 max-h-56 overflow-y-auto space-y-1 font-mono"></div>
+                                <div id="listCurators" class="win-inset p-1 flex-1 overflow-y-auto space-y-1 font-mono"></div>
                             </div>
                         </div>
                     </div>
                     <div id="view-activity" class="tab-view hidden space-y-2">
                         <div class="flex justify-between items-center text-xs"><span>アクティビティログ</span><button class="win-btn text-[10px]" onclick="downloadSectionCsv('activity')">CSV出力</button></div>
-                        <div class="win-inset overflow-auto max-h-[300px]">
+                        <div class="win-inset overflow-auto flex-1 min-h-0">
                             <table class="w-full text-xs retro-table font-sans">
-                                <thead><tr><th class="w-24">操作種別</th><th class="w-32">実行ユーザー</th><th>対象タイトル/内容</th><th class="w-36">日時</th></tr></thead>
+                                <thead><tr><th class="w-24">操作</th><th class="w-32">実行者</th><th>対象</th><th class="w-36">日時</th></tr></thead>
                                 <tbody id="tableActivityBody"><tr><td colspan="4" class="text-center text-gray-500 py-4">データなし</td></tr></tbody>
                             </table>
                         </div>
