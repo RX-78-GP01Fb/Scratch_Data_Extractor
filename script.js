@@ -7,15 +7,11 @@ const setProgress=(pct,text)=>{const p=Math.min(100,Math.max(0,pct));$('retroPro
 const cancelFetch=()=>(cancelRequested=true,setProgress(50,"中止要求を送信中..."));
 const resetForm=()=>($('studioIdInput').value='',setProgress(0,"準備完了"));
 
-// 通常データはoffset、活動履歴(activity)はdateLimitを使用するリトライ付きフェッチ
 async function fetchPage(type,studioId,offset,dateLimit="",retries=3,delay=1000){
   if(cancelRequested)return null;
   let url=`${API_BASE}/studios/${studioId}/${type}?limit=${PAGE_SIZE}`;
-  if(type==='activity' && dateLimit){
-    url+=`&dateLimit=${dateLimit}`;
-  }else{
-    url+=`&offset=${offset}`;
-  }
+  if(type==='activity' && dateLimit) url+=`&dateLimit=${dateLimit}`;
+  else url+=`&offset=${offset}`;
   for(let i=0;i<=retries;i++){
     try{const res=await fetch(url);if(!res.ok)throw Error(`HTTP ${res.status}`);return await res.json()}
     catch(err){if(cancelRequested)return null;if(i===retries)return null;await new Promise(r=>setTimeout(r,delay*Math.pow(2,i)))}
@@ -29,9 +25,15 @@ function appendItems(type,items){
   else if(type==='activity')items.forEach(a=>{
     const act=a.actor_username||(a.actor?a.actor.username:""),
           rec=a.recipient_username||(a.recipient?a.recipient.username:""),
-          proj=a.project_title||a.title||"";
+          proj=a.project_title||a.title||"",ty=a.type||"";
     let t=proj;if(!t&&rec)t=`対象: ${rec}`;
-    const dt=a.datetime_created?new Date(a.datetime_created).toLocaleString():"",ty=a.type||"";
+    if(!t){
+      if(ty==='updatestudio')t="スタジオ設定（タイトル/説明/画像など）";
+      else if(ty==='becomecurator')t=`キュレーター参加: ${act}`;
+      else if(ty==='becomeownerstudio')t=`マネージャー昇格: ${act}`;
+      else t="その他スタジオ操作";
+    }
+    const dt=a.datetime_created?new Date(a.datetime_created).toLocaleString():"";
     if(!fetchedData.activity.some(e=>e.type===ty&&e.actor===act&&e.title===t&&e.datetime===dt)) {
       fetchedData.activity.push({type:ty,actor:act,title:t,datetime:dt});
     }
@@ -42,16 +44,11 @@ async function fetchAllPages(type,studioId){
   if(type==='activity'){
     let dateLimit="";
     while(!finished&&!cancelRequested){
-      const prevCount=fetchedData.activity.length;
-      const items=await fetchPage('activity',studioId,0,dateLimit);
+      const prevCount=fetchedData.activity.length;const items=await fetchPage('activity',studioId,0,dateLimit);
       if(cancelRequested||items===null)break;if(!items.length){finished=true;break}
-      appendItems('activity',items);
-      if(items.length<PAGE_SIZE){finished=true;break}
-      // 最後のデータの日時を次のリクエストの起点にする
-      const lastItem=items[items.length-1];
-      dateLimit=lastItem.datetime_created||lastItem.datetime||"";
-      const currCount=fetchedData.activity.length;
-      if(currCount===prevCount){finished=true;break}
+      appendItems('activity',items);if(items.length<PAGE_SIZE){finished=true;break}
+      const lastItem=items[items.length-1];dateLimit=lastItem.datetime_created||lastItem.datetime||"";
+      const currCount=fetchedData.activity.length;if(currCount===prevCount){finished=true;break}
     }
   }else{
     let nextOffset=0;
