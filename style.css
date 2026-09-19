@@ -79,6 +79,11 @@ body {
     cursor: not-allowed;
 }
 
+.win-btn:focus-visible {
+    outline: 1px dotted #000000;
+    outline-offset: -4px;
+}
+
 /* Titlebar */
 .win-titlebar {
     background: var(--win-title-bg);
@@ -103,8 +108,17 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #000;
+    color: #000000;
     line-height: 1;
+    cursor: pointer;
+}
+
+.win-title-btn:active {
+    border-top: 1px solid var(--win-border-darker);
+    border-left: 1px solid var(--win-border-darker);
+    border-right: 1px solid var(--win-border-light);
+    border-bottom: 1px solid var(--win-border-light);
+    padding: 1px 0 0 1px;
 }
 
 /* Tab Controls */
@@ -190,12 +204,12 @@ body {
     color: #ffff00;
 }
 
-/* ★バグ修正：ホバー時に対象セルの固有背景を透過させ、白文字の可視性を確保 */
+/* ホバー時に対象セルの固有背景を透過させ、白文字の可視性を確保 */
 .retro-table tr:hover td {
     background-color: transparent !important;
 }
 
-/* ★全画面対応：タブ自体の自動伸縮 */
+/* 全画面対応：タブ自体の自動伸縮 */
 .tab-view:not(.hidden) {
     display: flex !important;
     flex-direction: column;
@@ -203,12 +217,12 @@ body {
     min-height: 0;
 }
 
-/* ★通常時のユーザー名：ダークブルー */
+/* 通常時のユーザー名：ダークブルー */
 .comment-author {
     color: #1e3a8a !important;
 }
 
-/* ★ホバー時のユーザー名：鮮やかなイエローに反転 */
+/* ホバー時のユーザー名：鮮やかなイエローに反転 */
 .retro-table tr:hover .comment-author {
     color: #ffff00 !important;
 }
@@ -219,6 +233,7 @@ body {
     height: 16px;
     background-color: var(--win-bg);
 }
+
 ::-webkit-scrollbar-thumb {
     background-color: var(--win-bg);
     border-top: 1px solid var(--win-border-light);
@@ -227,6 +242,11 @@ body {
     border-bottom: 1px solid var(--win-border-darker);
     box-shadow: inset -1px -1px 0px var(--win-border-dark);
 }
+
 ::-webkit-scrollbar-track {
     background-color: #e0e0e0;
+}
+
+::-webkit-scrollbar-corner {
+    background-color: var(--win-bg);
 }
