@@ -227,13 +227,6 @@ body {
     min-height: 0;
 }
 
-/* 【style.css の末尾に追加】 */
-
-/* 通常時のユーザー名：レトロ感のある濃い赤（ワインレッド）で視認性向上 */
-.comment-author {
-    color: #800000 !important;
-}
-
 /* 行ホバー時：濃い青の背景（#000080）に対して、最も視認性の高い黄色に変化 */
 .retro-table tr:hover .comment-author {
     color: #ffff00 !important;
