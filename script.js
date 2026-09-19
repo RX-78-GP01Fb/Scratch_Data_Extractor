@@ -1,4 +1,4 @@
-const API_BASE="https://polished-king-9c0b.kabocha2110.workers.dev",PAGE_SIZE=40,MAX_PARALLEL=4,ACT_PARALLEL=2;
+const API_BASE="https://polished-king-9c0b.kabocha2110.workers.dev",PAGE_SIZE=40,MAX_PARALLEL=4;
 let isFetching=false,cancelRequested=false,fetchedData={meta:{},projects:[],comments:[],managers:[],curators:[],activity:[]};
 const $=id=>document.getElementById(id),$$=s=>document.querySelectorAll(s);
 const parseStudioId=str=>{const m=str.trim().match(/studios\/(\d+)/)||str.trim().match(/^(\d+)$/);return m?m[1]:null};
@@ -7,9 +7,15 @@ const setProgress=(pct,text)=>{const p=Math.min(100,Math.max(0,pct));$('retroPro
 const cancelFetch=()=>(cancelRequested=true,setProgress(50,"中止要求を送信中..."));
 const resetForm=()=>($('studioIdInput').value='',setProgress(0,"準備完了"));
 
-async function fetchPage(type,studioId,offset,retries=3,delay=1000){
+// 通常データはoffset、活動履歴(activity)はdateLimitを使用するリトライ付きフェッチ
+async function fetchPage(type,studioId,offset,dateLimit="",retries=3,delay=1000){
   if(cancelRequested)return null;
-  const url=`${API_BASE}/studios/${studioId}/${type}?limit=${PAGE_SIZE}&offset=${offset}`;
+  let url=`${API_BASE}/studios/${studioId}/${type}?limit=${PAGE_SIZE}`;
+  if(type==='activity' && dateLimit){
+    url+=`&dateLimit=${dateLimit}`;
+  }else{
+    url+=`&offset=${offset}`;
+  }
   for(let i=0;i<=retries;i++){
     try{const res=await fetch(url);if(!res.ok)throw Error(`HTTP ${res.status}`);return await res.json()}
     catch(err){if(cancelRequested)return null;if(i===retries)return null;await new Promise(r=>setTimeout(r,delay*Math.pow(2,i)))}
@@ -22,10 +28,9 @@ function appendItems(type,items){
   else if(type==='managers'||type==='curators')items.forEach(m=>m.username&&!fetchedData[type].includes(m.username)&&fetchedData[type].push(m.username));
   else if(type==='activity')items.forEach(a=>{
     const act=a.actor_username||(a.actor?a.actor.username:""),
-          rec=a.recipient_username||(a.recipient?a.recipient.username:""), // 被招待・昇格者を取得
+          rec=a.recipient_username||(a.recipient?a.recipient.username:""),
           proj=a.project_title||a.title||"";
-    let t=proj;
-    if(!t&&rec)t=`対象: ${rec}`; // プロジェクト名がない場合は対象者名をセット
+    let t=proj;if(!t&&rec)t=`対象: ${rec}`;
     const dt=a.datetime_created?new Date(a.datetime_created).toLocaleString():"",ty=a.type||"";
     if(!fetchedData.activity.some(e=>e.type===ty&&e.actor===act&&e.title===t&&e.datetime===dt)) {
       fetchedData.activity.push({type:ty,actor:act,title:t,datetime:dt});
@@ -33,15 +38,32 @@ function appendItems(type,items){
   });
 }
 async function fetchAllPages(type,studioId){
-  let nextOffset=0,finished=false;const limit=type==='activity'?ACT_PARALLEL:MAX_PARALLEL;
-  while(!finished&&!cancelRequested){
-    const offsets=Array.from({length:limit},(_,i)=>nextOffset+i*PAGE_SIZE),prevCount=(fetchedData[type]?fetchedData[type].length:0);
-    const results=await Promise.all(offsets.map(o=>fetchPage(type,studioId,o)));if(cancelRequested)break;
-    let receivedAny=false,hasFailed=false;
-    for(const items of results){if(items===null){hasFailed=true;continue};if(!items.length){finished=true;continue};receivedAny=true;appendItems(type,items);if(items.length<PAGE_SIZE)finished=true}
-    const currCount=(fetchedData[type]?fetchedData[type].length:0);
-    if(!receivedAny||(!hasFailed&&type!=='managers'&&type!=='curators'&&currCount===prevCount)){finished=true;break}
-    nextOffset+=limit*PAGE_SIZE;
+  let finished=false;
+  if(type==='activity'){
+    let dateLimit="";
+    while(!finished&&!cancelRequested){
+      const prevCount=fetchedData.activity.length;
+      const items=await fetchPage('activity',studioId,0,dateLimit);
+      if(cancelRequested||items===null)break;if(!items.length){finished=true;break}
+      appendItems('activity',items);
+      if(items.length<PAGE_SIZE){finished=true;break}
+      // 最後のデータの日時を次のリクエストの起点にする
+      const lastItem=items[items.length-1];
+      dateLimit=lastItem.datetime_created||lastItem.datetime||"";
+      const currCount=fetchedData.activity.length;
+      if(currCount===prevCount){finished=true;break}
+    }
+  }else{
+    let nextOffset=0;
+    while(!finished&&!cancelRequested){
+      const offsets=Array.from({length:MAX_PARALLEL},(_,i)=>nextOffset+i*PAGE_SIZE),prevCount=(fetchedData[type]?fetchedData[type].length:0);
+      const results=await Promise.all(offsets.map(o=>fetchPage(type,studioId,o)));if(cancelRequested)break;
+      let receivedAny=false,hasFailed=false;
+      for(const items of results){if(items===null){hasFailed=true;continue};if(!items.length){finished=true;continue};receivedAny=true;appendItems(type,items);if(items.length<PAGE_SIZE)finished=true}
+      const currCount=(fetchedData[type]?fetchedData[type].length:0);
+      if(!receivedAny||(!hasFailed&&type!=='managers'&&type!=='curators'&&currCount===prevCount)){finished=true;break}
+      nextOffset+=MAX_PARALLEL*PAGE_SIZE;
+    }
   }
 }
 async function startExtraction(){
