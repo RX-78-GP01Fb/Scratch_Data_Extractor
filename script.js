@@ -65,7 +65,7 @@ const resetForm = () => {
 
 async function fetchPage(type, studioId, offset) {
     if (cancelRequested) {
-        return [];
+        return null;
     }
 
     const url =
@@ -76,7 +76,7 @@ async function fetchPage(type, studioId, offset) {
         const response = await fetch(url);
 
         if (!response.ok) {
-            return [];
+            return null;
         }
 
         return await response.json();
@@ -86,7 +86,7 @@ async function fetchPage(type, studioId, offset) {
             console.error(`取得エラー [${type} / ${offset}]`, error);
         }
 
-        return [];
+        return null;
     }
 }
 
@@ -165,9 +165,6 @@ async function fetchAllPages(type, studioId) {
 
         const offsets = [];
 
-        /*
-         * 最大4ページを同時取得
-         */
         for (
             let i = 0;
             i < MAX_PARALLEL_PAGES;
@@ -194,6 +191,11 @@ async function fetchAllPages(type, studioId) {
 
             const items = results[i];
 
+            // リクエスト失敗（null）時は終了判定をスキップ
+            if (!items) {
+                continue;
+            }
+
             if (!items.length) {
                 finished = true;
                 continue;
@@ -203,10 +205,6 @@ async function fetchAllPages(type, studioId) {
 
             appendItems(type, items);
 
-            /*
-             * PAGE_SIZE未満なら、
-             * そのページが最後のページと判断
-             */
             if (items.length < PAGE_SIZE) {
                 finished = true;
             }
@@ -639,7 +637,7 @@ function renderUI() {
 
 
 /* =========================================================
-   HTMLエスケープ
+   HTML / CSV エスケープ処理
    ========================================================= */
 
 const esc = str =>
@@ -652,9 +650,14 @@ const esc = str =>
             .replace(/'/g, "&#039;")
         : '';
 
+const escCsv = val => {
+    if (val === null || val === undefined) return '""';
+    return `"${String(val).replace(/"/g, '""')}"`;
+};
+
 
 /* =========================================================
-   ダウンロード
+   ダウンロード helper
    ========================================================= */
 
 const dl = (b, fn) => {
@@ -715,12 +718,10 @@ function downloadCombinedCsv() {
 
     let c = [
         "\uFEFF--- スタジオ情報 ---",
-        `ID,${fetchedData.meta.id}`,
-        `タイトル,"${(
-            fetchedData.meta.title || ''
-        ).replace(/"/g, '""')}"`,
-        `オーナー,${fetchedData.meta.owner}`,
-        `取得日時,${fetchedData.meta.fetchedAt}\n`,
+        `ID,${escCsv(fetchedData.meta.id)}`,
+        `タイトル,${escCsv(fetchedData.meta.title)}`,
+        `オーナー,${escCsv(fetchedData.meta.owner)}`,
+        `取得日時,${escCsv(fetchedData.meta.fetchedAt)}\n`,
 
         "--- プロジェクト一覧 ---",
         "ID,タイトル,URL,追加者"
@@ -728,9 +729,7 @@ function downloadCombinedCsv() {
 
     fetchedData.projects.forEach(p =>
         c.push(
-            `${p.id},"${
-                p.title.replace(/"/g, '""')
-            }",${p.url},${p.actor}`
+            `${escCsv(p.id)},${escCsv(p.title)},${escCsv(p.url)},${escCsv(p.actor)}`
         )
     );
 
@@ -741,26 +740,22 @@ function downloadCombinedCsv() {
 
     fetchedData.comments.forEach(co =>
         c.push(
-            `${co.username},"${
-                co.content.replace(/"/g, '""')
-            }",${co.datetime}`
+            `${escCsv(co.username)},${escCsv(co.content)},${escCsv(co.datetime)}`
         )
     );
 
     c.push(
         "\n--- マネージャー ---",
-        fetchedData.managers.join(","),
+        fetchedData.managers.map(escCsv).join(","),
         "--- キュレーター ---",
-        fetchedData.curators.join(","),
+        fetchedData.curators.map(escCsv).join(","),
         "\n--- 活動履歴 ---",
         "操作種別,実行者,対象タイトル,日時"
     );
 
     fetchedData.activity.forEach(a =>
         c.push(
-            `${a.type},${a.actor},"${
-                a.title.replace(/"/g, '""')
-            }",${a.datetime}`
+            `${escCsv(a.type)},${escCsv(a.actor)},${escCsv(a.title)},${escCsv(a.datetime)}`
         )
     );
 
@@ -792,9 +787,7 @@ function downloadSectionCsv(sec) {
 
         fetchedData.projects.forEach(p =>
             c.push(
-                `${p.id},"${
-                    p.title.replace(/"/g, '""')
-                }",${p.url},${p.actor}`
+                `${escCsv(p.id)},${escCsv(p.title)},${escCsv(p.url)},${escCsv(p.actor)}`
             )
         );
 
@@ -806,9 +799,7 @@ function downloadSectionCsv(sec) {
 
         fetchedData.comments.forEach(co =>
             c.push(
-                `${co.username},"${
-                    co.content.replace(/"/g, '""')
-                }",${co.datetime}`
+                `${escCsv(co.username)},${escCsv(co.content)},${escCsv(co.datetime)}`
             )
         );
 
@@ -820,9 +811,7 @@ function downloadSectionCsv(sec) {
 
         fetchedData.activity.forEach(a =>
             c.push(
-                `${a.type},${a.actor},"${
-                    a.title.replace(/"/g, '""')
-                }",${a.datetime}`
+                `${escCsv(a.type)},${escCsv(a.actor)},${escCsv(a.title)},${escCsv(a.datetime)}`
             )
         );
     }
