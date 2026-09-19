@@ -7,7 +7,6 @@ const setProgress=(pct,text)=>{const p=Math.min(100,Math.max(0,pct));$('retroPro
 const cancelFetch=()=>(cancelRequested=true,setProgress(50,"中止要求を送信中..."));
 const resetForm=()=>($('studioIdInput').value='',setProgress(0,"準備完了"));
 
-// 指数バックオフ付きリトライ機能付きフェッチ
 async function fetchPage(type,studioId,offset,retries=3,delay=1000){
   if(cancelRequested)return null;
   const url=`${API_BASE}/studios/${studioId}/${type}?limit=${PAGE_SIZE}&offset=${offset}`;
@@ -17,20 +16,20 @@ async function fetchPage(type,studioId,offset,retries=3,delay=1000){
   }
 }
 function appendItems(type,items){
-  if(!items?.length)return;
-  if(type==='projects')items.forEach(p=>!fetchedData.projects.some(e=>e.id===p.id)&&fetchedData.projects.push({id:p.id,title:p.title||"",url:`https://scratch.mit.edu/projects/${p.id}/`,actor:p.actor?.username||""}));
-  else if(type==='comments')items.forEach(c=>{const dt=c.datetime_created?new Date(c.datetime_created).toLocaleString():"",auth=c.author?.username||"匿名",ct=c.content||"";!fetchedData.comments.some(e=>e.username===auth&&e.content===ct&&e.datetime===dt)&&fetchedData.comments.push({username:auth,content:ct,datetime:dt})});
+  if(!items || !items.length)return;
+  if(type==='projects')items.forEach(p=>!fetchedData.projects.some(e=>e.id===p.id)&&fetchedData.projects.push({id:p.id,title:p.title||"",url:`https://scratch.mit.edu/projects/${p.id}/`,actor:(p.actor?p.actor.username:"")}));
+  else if(type==='comments')items.forEach(c=>{const dt=c.datetime_created?new Date(c.datetime_created).toLocaleString():"",auth=(c.author?c.author.username:"匿名"),ct=c.content||"";!fetchedData.comments.some(e=>e.username===auth&&e.content===ct&&e.datetime===dt)&&fetchedData.comments.push({username:auth,content:ct,datetime:dt})});
   else if(type==='managers'||type==='curators')items.forEach(m=>m.username&&!fetchedData[type].includes(m.username)&&fetchedData[type].push(m.username));
-  else if(type==='activity')items.forEach(a=>{const act=a.actor_username||a.actor?.username||"",t=a.project_title||a.title||"",dt=a.datetime_created?new Date(a.datetime_created).toLocaleString():"",ty=a.type||"";!fetchedData.activity.some(e=>e.type===ty&&e.actor===act&&e.title===t&&e.datetime===dt)&&fetchedData.activity.push({type:ty,actor:act,title:t,datetime:dt})});
+  else if(type==='activity')items.forEach(a=>{const act=a.actor_username||(a.actor?a.actor.username:""),t=a.project_title||a.title||"",dt=a.datetime_created?new Date(a.datetime_created).toLocaleString():"",ty=a.type||"";!fetchedData.activity.some(e=>e.type===ty&&e.actor===act&&e.title===t&&e.datetime===dt)&&fetchedData.activity.push({type:ty,actor:act,title:t,datetime:dt})});
 }
 async function fetchAllPages(type,studioId){
   let nextOffset=0,finished=false;const limit=type==='activity'?ACT_PARALLEL:MAX_PARALLEL;
   while(!finished&&!cancelRequested){
-    const offsets=Array.from({length:limit},(_,i)=>nextOffset+i*PAGE_SIZE),prevCount=fetchedData[type]?.length||0;
+    const offsets=Array.from({length:limit},(_,i)=>nextOffset+i*PAGE_SIZE),prevCount=(fetchedData[type]?fetchedData[type].length:0);
     const results=await Promise.all(offsets.map(o=>fetchPage(type,studioId,o)));if(cancelRequested)break;
     let receivedAny=false,hasFailed=false;
     for(const items of results){if(items===null){hasFailed=true;continue};if(!items.length){finished=true;continue};receivedAny=true;appendItems(type,items);if(items.length<PAGE_SIZE)finished=true}
-    const currCount=fetchedData[type]?.length||0;
+    const currCount=(fetchedData[type]?fetchedData[type].length:0);
     if(!receivedAny||(!hasFailed&&type!=='managers'&&type!=='curators'&&currCount===prevCount)){finished=true;break}
     nextOffset+=limit*PAGE_SIZE;
   }
