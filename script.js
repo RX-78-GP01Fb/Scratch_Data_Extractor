@@ -81,7 +81,7 @@ function renderUI() {
     document.getElementById('metaDesc').innerText = fetchedData.meta.description || "(説明なし)";
 
     document.getElementById('tableProjectsBody').innerHTML = fetchedData.projects.length ? fetchedData.projects.map(p => `<tr><td>${p.id}</td><td class="font-semibold">${esc(p.title)}</td><td>${esc(p.actor)}</td><td class="text-center"><a href="${p.url}" target="_blank" class="text-blue-800 underline">開く</a></td></tr>`).join('') : '<tr><td colspan="4" class="text-center text-gray-500 py-4">データなし</td></tr>';
-    document.getElementById('tableCommentsBody').innerHTML = fetchedData.comments.length ? fetchedData.comments.map(c => `<tr><td class="font-bold text-blue-900">${esc(c.username)}</td><td class="whitespace-pre-wrap">${esc(c.content)}</td><td class="text-gray-500">${c.datetime}</td></tr>`).join('') : '<tr><td colspan="3" class="text-center text-gray-500 py-4">データなし</td></tr>';
+    document.getElementById('tableCommentsBody').innerHTML = fetchedData.comments.length ? fetchedData.comments.map(c => `<tr><td class="font-bold comment-author">${esc(c.username)}</td><td class="whitespace-pre-wrap">${esc(c.content)}</td><td class="text-gray-500">${c.datetime}</td></tr>`).join('') : '<tr><td colspan="3" class="text-center text-gray-500 py-4">データなし</td></tr>';
     document.getElementById('cntManagers').innerText = `${fetchedData.managers.length}名`;
     document.getElementById('cntCurators').innerText = `${fetchedData.curators.length}名`;
     document.getElementById('listManagers').innerHTML = fetchedData.managers.length ? fetchedData.managers.map(m => `<div>• ${esc(m)}</div>`).join('') : '<div class="text-gray-400">なし</div>';
