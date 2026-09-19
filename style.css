@@ -1,0 +1,22 @@
+.win-outset {
+    background: #c0c0c0;
+    border: 2px solid;
+    border-color: #fff #000 #000 #fff;
+}
+.win-inset {
+    border: 2px solid;
+    border-color: #808080 #fff #fff #808080;
+}
+.win-btn {
+    background: #c0c0c0;
+    border: 2px solid;
+    border-color: #fff #000 #000 #fff;
+}
+.retro-table tr:hover {
+    background: #000080;
+    color: #fff;
+}
+/* ★ホバーバグ修正：セル固有の背景色を透過させて文字を白く表示 */
+.retro-table tr:hover td {
+    background-color: transparent !important;
+}
