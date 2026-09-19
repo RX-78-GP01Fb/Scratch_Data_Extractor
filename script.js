@@ -1,4 +1,4 @@
-```javascript
+javascript
 const API_BASE = "https://polished-king-9c0b.kabocha2110.workers.dev";
 
 let isFetching = false;
@@ -862,4 +862,3 @@ function downloadSectionTxt() {
         `studio_${fetchedData.meta.id}_members.txt`
     );
 }
-```
