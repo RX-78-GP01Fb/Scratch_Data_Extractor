@@ -218,3 +218,11 @@ body {
 ::-webkit-scrollbar-track {
     background-color: #e0e0e0;
 }
+
+/* アクティブなタブ表示を親要素の高さに合わせて縦に伸縮させる */
+.tab-view:not(.hidden) {
+    display: flex !important;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+}
