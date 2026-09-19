@@ -1,22 +1,220 @@
+/* 1990s - 2000s Classic Windows GUI Design System */
+:root {
+    --win-bg: #c0c0c0;
+    --win-border-light: #ffffff;
+    --win-border-dark: #808080;
+    --win-border-darker: #000000;
+    --win-title-bg: linear-gradient(90deg, #000080, #1084d0);
+    --win-title-text: #ffffff;
+    --win-btn-face: #c0c0c0;
+    --win-field-bg: #ffffff;
+    --win-blue-accent: #000080;
+}
+
+body {
+    background-color: #008080; /* Classic Teal Windows Desktop Background */
+    font-family: 'Tahoma', 'MS Sans Serif', 'Arial', sans-serif;
+    font-size: 11px;
+    color: #000000;
+    user-select: none;
+}
+
+/* Beveled Border Styles */
 .win-outset {
-    background: #c0c0c0;
-    border: 2px solid;
-    border-color: #fff #000 #000 #fff;
+    background-color: var(--win-bg);
+    border-top: 2px solid var(--win-border-light);
+    border-left: 2px solid var(--win-border-light);
+    border-right: 2px solid var(--win-border-darker);
+    border-bottom: 2px solid var(--win-border-darker);
+    box-shadow: inset -1px -1px 0px var(--win-border-dark), inset 1px 1px 0px var(--win-border-light);
 }
+
 .win-inset {
-    border: 2px solid;
-    border-color: #808080 #fff #fff #808080;
+    background-color: var(--win-field-bg);
+    border-top: 2px solid var(--win-border-dark);
+    border-left: 2px solid var(--win-border-dark);
+    border-right: 2px solid var(--win-border-light);
+    border-bottom: 2px solid var(--win-border-light);
+    box-shadow: inset -1px -1px 0px var(--win-border-light), inset 1px 1px 0px var(--win-border-darker);
 }
+
+.win-inset-panel {
+    background-color: var(--win-bg);
+    border-top: 2px solid var(--win-border-dark);
+    border-left: 2px solid var(--win-border-dark);
+    border-right: 2px solid var(--win-border-light);
+    border-bottom: 2px solid var(--win-border-light);
+}
+
+/* Classic Buttons */
 .win-btn {
-    background: #c0c0c0;
-    border: 2px solid;
-    border-color: #fff #000 #000 #fff;
+    background-color: var(--win-btn-face);
+    border-top: 2px solid var(--win-border-light);
+    border-left: 2px solid var(--win-border-light);
+    border-right: 2px solid var(--win-border-darker);
+    border-bottom: 2px solid var(--win-border-darker);
+    box-shadow: inset -1px -1px 0px var(--win-border-dark);
+    font-size: 11px;
+    font-weight: bold;
+    padding: 3px 10px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
 }
+
+.win-btn:active:not(:disabled) {
+    border-top: 2px solid var(--win-border-darker);
+    border-left: 2px solid var(--win-border-darker);
+    border-right: 2px solid var(--win-border-light);
+    border-bottom: 2px solid var(--win-border-light);
+    box-shadow: inset 1px 1px 0px var(--win-border-dark);
+    padding: 4px 9px 2px 11px;
+}
+
+.win-btn:disabled {
+    color: #808080;
+    text-shadow: 1px 1px 0px #ffffff;
+    cursor: not-allowed;
+}
+
+/* Window Title Bar */
+.win-titlebar {
+    background: var(--win-title-bg);
+    color: var(--win-title-text);
+    padding: 3px 4px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.win-title-btn {
+    width: 16px;
+    height: 14px;
+    background-color: var(--win-btn-face);
+    border-top: 1px solid var(--win-border-light);
+    border-left: 1px solid var(--win-border-light);
+    border-right: 1px solid var(--win-border-darker);
+    border-bottom: 1px solid var(--win-border-darker);
+    font-size: 9px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #000;
+    line-height: 1;
+}
+
+/* Tab Controls */
+.win-tab-btn {
+    background-color: var(--win-bg);
+    border-top: 2px solid var(--win-border-light);
+    border-left: 2px solid var(--win-border-light);
+    border-right: 2px solid var(--win-border-darker);
+    border-bottom: none;
+    padding: 4px 10px 2px 10px;
+    margin-right: 2px;
+    cursor: pointer;
+    position: relative;
+    top: 2px;
+    font-size: 11px;
+}
+
+.win-tab-btn.active {
+    background-color: var(--win-bg);
+    border-top: 2px solid var(--win-border-light);
+    border-left: 2px solid var(--win-border-light);
+    border-right: 2px solid var(--win-border-darker);
+    font-weight: bold;
+    top: 0px;
+    padding-bottom: 5px;
+    z-index: 10;
+}
+
+/* Segmented Block Progress Bar */
+.retro-progress-container {
+    background-color: var(--win-field-bg);
+    border-top: 2px solid var(--win-border-dark);
+    border-left: 2px solid var(--win-border-dark);
+    border-right: 2px solid var(--win-border-light);
+    border-bottom: 2px solid var(--win-border-light);
+    height: 20px;
+    padding: 2px;
+    position: relative;
+    overflow: hidden;
+}
+
+.retro-progress-fill {
+    height: 100%;
+    background-color: #000080;
+    width: 0%;
+    transition: width 0.15s linear;
+    background-image: linear-gradient(
+        90deg,
+        transparent 0px,
+        transparent 7px,
+        var(--win-field-bg) 7px,
+        var(--win-field-bg) 9px
+    );
+    background-size: 9px 10px;
+}
+
+/* DataGrid Header & Cells */
+.retro-table th {
+    background-color: var(--win-btn-face);
+    border-top: 1px solid var(--win-border-light);
+    border-left: 1px solid var(--win-border-light);
+    border-right: 1px solid var(--win-border-darker);
+    border-bottom: 1px solid var(--win-border-darker);
+    padding: 3px 6px;
+    text-align: left;
+    font-weight: bold;
+    position: sticky;
+    top: 0;
+    z-index: 5;
+}
+
+.retro-table td {
+    padding: 3px 6px;
+    border-right: 1px solid #e0e0e0;
+    border-bottom: 1px solid #e0e0e0;
+    white-space: nowrap;
+}
+
+.retro-table tr:nth-child(even) {
+    background-color: #f8f8f8;
+}
+
 .retro-table tr:hover {
-    background: #000080;
-    color: #fff;
+    background-color: #000080;
+    color: #ffffff;
 }
-/* ★ホバーバグ修正：セル固有の背景色を透過させて文字を白く表示 */
+
+.retro-table tr:hover a {
+    color: #ffff00;
+}
+
+/* ★バグ修正：行ホバー時に対象セルの固有背景を透過させ、白文字の可視性を確保 */
 .retro-table tr:hover td {
     background-color: transparent !important;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+    width: 16px;
+    height: 16px;
+    background-color: var(--win-bg);
+}
+::-webkit-scrollbar-thumb {
+    background-color: var(--win-bg);
+    border-top: 1px solid var(--win-border-light);
+    border-left: 1px solid var(--win-border-light);
+    border-right: 1px solid var(--win-border-darker);
+    border-bottom: 1px solid var(--win-border-darker);
+    box-shadow: inset -1px -1px 0px var(--win-border-dark);
+}
+::-webkit-scrollbar-track {
+    background-color: #e0e0e0;
 }
