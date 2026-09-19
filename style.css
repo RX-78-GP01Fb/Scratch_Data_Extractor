@@ -12,14 +12,14 @@
 }
 
 body {
-    background-color: #008080; /* Classic Teal Windows Desktop Background */
+    background-color: #008080; /* Classic Teal Desktop */
     font-family: 'Tahoma', 'MS Sans Serif', 'Arial', sans-serif;
     font-size: 11px;
     color: #000000;
     user-select: none;
 }
 
-/* Beveled Border Styles */
+/* Beveled Borders */
 .win-outset {
     background-color: var(--win-bg);
     border-top: 2px solid var(--win-border-light);
@@ -46,7 +46,7 @@ body {
     border-bottom: 2px solid var(--win-border-light);
 }
 
-/* Classic Buttons */
+/* Buttons */
 .win-btn {
     background-color: var(--win-btn-face);
     border-top: 2px solid var(--win-border-light);
@@ -79,7 +79,7 @@ body {
     cursor: not-allowed;
 }
 
-/* Window Title Bar */
+/* Titlebar */
 .win-titlebar {
     background: var(--win-title-bg);
     color: var(--win-title-text);
@@ -133,7 +133,7 @@ body {
     z-index: 10;
 }
 
-/* Segmented Block Progress Bar */
+/* Progress Bar */
 .retro-progress-container {
     background-color: var(--win-field-bg);
     border-top: 2px solid var(--win-border-dark);
@@ -151,17 +151,11 @@ body {
     background-color: #000080;
     width: 0%;
     transition: width 0.15s linear;
-    background-image: linear-gradient(
-        90deg,
-        transparent 0px,
-        transparent 7px,
-        var(--win-field-bg) 7px,
-        var(--win-field-bg) 9px
-    );
+    background-image: linear-gradient(90deg, transparent 0px, transparent 7px, var(--win-field-bg) 7px, var(--win-field-bg) 9px);
     background-size: 9px 10px;
 }
 
-/* DataGrid Header & Cells */
+/* Data Table Grid */
 .retro-table th {
     background-color: var(--win-btn-face);
     border-top: 1px solid var(--win-border-light);
@@ -196,12 +190,30 @@ body {
     color: #ffff00;
 }
 
-/* ★バグ修正：行ホバー時に対象セルの固有背景を透過させ、白文字の可視性を確保 */
+/* ★バグ修正：ホバー時に対象セルの固有背景を透過させ、白文字の可視性を確保 */
 .retro-table tr:hover td {
     background-color: transparent !important;
 }
 
-/* Scrollbar styling */
+/* ★全画面対応：タブ自体の自動伸縮 */
+.tab-view:not(.hidden) {
+    display: flex !important;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+}
+
+/* ★通常時のユーザー名：ダークブルー */
+.comment-author {
+    color: #1e3a8a !important;
+}
+
+/* ★ホバー時のユーザー名：鮮やかなイエローに反転 */
+.retro-table tr:hover .comment-author {
+    color: #ffff00 !important;
+}
+
+/* Scrollbar */
 ::-webkit-scrollbar {
     width: 16px;
     height: 16px;
@@ -217,17 +229,4 @@ body {
 }
 ::-webkit-scrollbar-track {
     background-color: #e0e0e0;
-}
-
-/* アクティブなタブ表示を親要素の高さに合わせて縦に伸縮させる */
-.tab-view:not(.hidden) {
-    display: flex !important;
-    flex-direction: column;
-    height: 100%;
-    min-height: 0;
-}
-
-/* 行ホバー時：濃い青の背景（#000080）に対して、最も視認性の高い黄色に変化 */
-.retro-table tr:hover .comment-author {
-    color: #ffff00 !important;
 }
