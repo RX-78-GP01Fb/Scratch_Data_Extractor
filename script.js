@@ -20,7 +20,17 @@ function appendItems(type,items){
   if(type==='projects')items.forEach(p=>!fetchedData.projects.some(e=>e.id===p.id)&&fetchedData.projects.push({id:p.id,title:p.title||"",url:`https://scratch.mit.edu/projects/${p.id}/`,actor:(p.actor?p.actor.username:"")}));
   else if(type==='comments')items.forEach(c=>{const dt=c.datetime_created?new Date(c.datetime_created).toLocaleString():"",auth=(c.author?c.author.username:"匿名"),ct=c.content||"";!fetchedData.comments.some(e=>e.username===auth&&e.content===ct&&e.datetime===dt)&&fetchedData.comments.push({username:auth,content:ct,datetime:dt})});
   else if(type==='managers'||type==='curators')items.forEach(m=>m.username&&!fetchedData[type].includes(m.username)&&fetchedData[type].push(m.username));
-  else if(type==='activity')items.forEach(a=>{const act=a.actor_username||(a.actor?a.actor.username:""),t=a.project_title||a.title||"",dt=a.datetime_created?new Date(a.datetime_created).toLocaleString():"",ty=a.type||"";!fetchedData.activity.some(e=>e.type===ty&&e.actor===act&&e.title===t&&e.datetime===dt)&&fetchedData.activity.push({type:ty,actor:act,title:t,datetime:dt})});
+  else if(type==='activity')items.forEach(a=>{
+    const act=a.actor_username||(a.actor?a.actor.username:""),
+          rec=a.recipient_username||(a.recipient?a.recipient.username:""), // 被招待・昇格者を取得
+          proj=a.project_title||a.title||"";
+    let t=proj;
+    if(!t&&rec)t=`対象: ${rec}`; // プロジェクト名がない場合は対象者名をセット
+    const dt=a.datetime_created?new Date(a.datetime_created).toLocaleString():"",ty=a.type||"";
+    if(!fetchedData.activity.some(e=>e.type===ty&&e.actor===act&&e.title===t&&e.datetime===dt)) {
+      fetchedData.activity.push({type:ty,actor:act,title:t,datetime:dt});
+    }
+  });
 }
 async function fetchAllPages(type,studioId){
   let nextOffset=0,finished=false;const limit=type==='activity'?ACT_PARALLEL:MAX_PARALLEL;
