@@ -4,7 +4,8 @@ let isFetching = false;
 let cancelRequested = false;
 
 const PAGE_SIZE = 40;
-const MAX_PARALLEL_PAGES = 4;
+const MAX_PARALLEL_PAGES = 4; // 通常データ（Projects, Comments, Members）の標準並列数
+const ACTIVITY_PARALLEL_PAGES = 2; // Scratch APIの遅延・制限を回避するための Activity 専用並列数
 
 let fetchedData = {
     meta: {},
@@ -154,12 +155,15 @@ function appendItems(type, items) {
 
 
 /* =========================================================
-   1種類のデータをページ単位で並列取得
+   1種類のデータをページ単位で並列取得（並列制御対応）
    ========================================================= */
 
 async function fetchAllPages(type, studioId) {
     let nextOffset = 0;
     let finished = false;
+
+    // カテゴリごとに適した並列数を設定（activity の場合は負荷軽減のため並列度を抑制）
+    const currentParallelLimit = (type === 'activity') ? ACTIVITY_PARALLEL_PAGES : MAX_PARALLEL_PAGES;
 
     while (!finished && !cancelRequested) {
 
@@ -167,7 +171,7 @@ async function fetchAllPages(type, studioId) {
 
         for (
             let i = 0;
-            i < MAX_PARALLEL_PAGES;
+            i < currentParallelLimit;
             i++
         ) {
             offsets.push(
@@ -215,7 +219,7 @@ async function fetchAllPages(type, studioId) {
         }
 
         nextOffset +=
-            MAX_PARALLEL_PAGES * PAGE_SIZE;
+            currentParallelLimit * PAGE_SIZE;
     }
 }
 
