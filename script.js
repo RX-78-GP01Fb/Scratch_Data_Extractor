@@ -176,7 +176,7 @@ function appendItems(type, items) {
 
 
 /* =========================================================
-   1種類のデータをページ単位で並列取得（並列度制御 & ループ防衛機能つき）
+   1種類のデータをページ単位で並列取得（並列度制御＆取り込み漏れ防止）
    ========================================================= */
 
 async function fetchAllPages(type, studioId) {
@@ -194,9 +194,6 @@ async function fetchAllPages(type, studioId) {
             offsets.push(nextOffset + i * PAGE_SIZE);
         }
 
-        // 取得前の件数を記録
-        const previousCount = fetchedData[type] ? fetchedData[type].length : 0;
-
         const results = await Promise.all(
             offsets.map(offset => fetchPage(type, studioId, offset))
         );
@@ -205,33 +202,30 @@ async function fetchAllPages(type, studioId) {
             break;
         }
 
-        let receivedAny = false;
+        let hasValidPage = false;
 
         for (let i = 0; i < results.length; i++) {
             const items = results[i];
 
+            // リクエスト失敗（null）時は次のページ確認へ
             if (!items) {
                 continue;
             }
 
-            if (!items.length) {
-                finished = true;
-                continue;
+            // 1件以上データが存在すれば追加
+            if (items.length > 0) {
+                hasValidPage = true;
+                appendItems(type, items);
             }
 
-            receivedAny = true;
-            appendItems(type, items);
-
+            // PAGE_SIZE 未満しか返ってこなかった場合、そこが終端
             if (items.length < PAGE_SIZE) {
                 finished = true;
             }
         }
 
-        // 新しく追加された件数を取得
-        const currentCount = fetchedData[type] ? fetchedData[type].length : 0;
-
-        // データを受信したにもかかわらず、重複除外により新規件数が増えなくなった場合は終端とみなして即終了
-        if (!receivedAny || (type !== 'managers' && type !== 'curators' && currentCount === previousCount)) {
+        // 今回並列取得したページ全てで1件も有効なデータが得られなかった場合は終了
+        if (!hasValidPage) {
             finished = true;
             break;
         }
