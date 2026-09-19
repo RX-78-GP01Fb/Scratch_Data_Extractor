@@ -93,7 +93,7 @@ async function fetchPage(type, studioId, offset) {
 
 
 /* =========================================================
-   データ変換
+   データ変換（重複防止機能つき）
    ========================================================= */
 
 function appendItems(type, items) {
@@ -104,30 +104,44 @@ function appendItems(type, items) {
     if (type === 'projects') {
 
         items.forEach(p => {
-            fetchedData.projects.push({
-                id: p.id,
-                title: p.title || "",
-                url: `https://scratch.mit.edu/projects/${p.id}/`,
-                actor: p.actor?.username || ""
-            });
+            // プロジェクトIDで重複チェック
+            if (!fetchedData.projects.some(existing => existing.id === p.id)) {
+                fetchedData.projects.push({
+                    id: p.id,
+                    title: p.title || "",
+                    url: `https://scratch.mit.edu/projects/${p.id}/`,
+                    actor: p.actor?.username || ""
+                });
+            }
         });
 
     } else if (type === 'comments') {
 
         items.forEach(c => {
-            fetchedData.comments.push({
-                username: c.author?.username || "匿名",
-                content: c.content || "",
-                datetime: c.datetime_created
-                    ? new Date(c.datetime_created).toLocaleString()
-                    : ""
-            });
+            // 投稿者・内容・日時で重複チェック
+            const datetimeStr = c.datetime_created ? new Date(c.datetime_created).toLocaleString() : "";
+            const authorStr = c.author?.username || "匿名";
+            const contentStr = c.content || "";
+
+            const isDuplicate = fetchedData.comments.some(existing => 
+                existing.username === authorStr &&
+                existing.content === contentStr &&
+                existing.datetime === datetimeStr
+            );
+
+            if (!isDuplicate) {
+                fetchedData.comments.push({
+                    username: authorStr,
+                    content: contentStr,
+                    datetime: datetimeStr
+                });
+            }
         });
 
     } else if (type === 'managers' || type === 'curators') {
 
         items.forEach(m => {
-            if (m.username) {
+            if (m.username && !fetchedData[type].includes(m.username)) {
                 fetchedData[type].push(m.username);
             }
         });
@@ -135,27 +149,34 @@ function appendItems(type, items) {
     } else if (type === 'activity') {
 
         items.forEach(a => {
-            fetchedData.activity.push({
-                type: a.type || "",
-                actor:
-                    a.actor_username ||
-                    a.actor?.username ||
-                    "",
-                title:
-                    a.project_title ||
-                    a.title ||
-                    "",
-                datetime: a.datetime_created
-                    ? new Date(a.datetime_created).toLocaleString()
-                    : ""
-            });
+            const actorStr = a.actor_username || a.actor?.username || "";
+            const titleStr = a.project_title || a.title || "";
+            const datetimeStr = a.datetime_created ? new Date(a.datetime_created).toLocaleString() : "";
+            const typeStr = a.type || "";
+
+            // アクティビティの重複チェック（操作種別・実行者・タイトル・日時が完全一致するものを除外）
+            const isDuplicate = fetchedData.activity.some(existing => 
+                existing.type === typeStr &&
+                existing.actor === actorStr &&
+                existing.title === titleStr &&
+                existing.datetime === datetimeStr
+            );
+
+            if (!isDuplicate) {
+                fetchedData.activity.push({
+                    type: typeStr,
+                    actor: actorStr,
+                    title: titleStr,
+                    datetime: datetimeStr
+                });
+            }
         });
     }
 }
 
 
 /* =========================================================
-   1種類のデータをページ単位で並列取得（並列制御対応）
+   1種類のデータをページ単位で並列取得（並列度制御 & ループ防衛機能つき）
    ========================================================= */
 
 async function fetchAllPages(type, studioId) {
@@ -169,20 +190,15 @@ async function fetchAllPages(type, studioId) {
 
         const offsets = [];
 
-        for (
-            let i = 0;
-            i < currentParallelLimit;
-            i++
-        ) {
-            offsets.push(
-                nextOffset + i * PAGE_SIZE
-            );
+        for (let i = 0; i < currentParallelLimit; i++) {
+            offsets.push(nextOffset + i * PAGE_SIZE);
         }
 
+        // 取得前の件数を記録
+        const previousCount = fetchedData[type] ? fetchedData[type].length : 0;
+
         const results = await Promise.all(
-            offsets.map(offset =>
-                fetchPage(type, studioId, offset)
-            )
+            offsets.map(offset => fetchPage(type, studioId, offset))
         );
 
         if (cancelRequested) {
@@ -192,10 +208,8 @@ async function fetchAllPages(type, studioId) {
         let receivedAny = false;
 
         for (let i = 0; i < results.length; i++) {
-
             const items = results[i];
 
-            // リクエスト失敗（null）時は終了判定をスキップ
             if (!items) {
                 continue;
             }
@@ -206,7 +220,6 @@ async function fetchAllPages(type, studioId) {
             }
 
             receivedAny = true;
-
             appendItems(type, items);
 
             if (items.length < PAGE_SIZE) {
@@ -214,12 +227,16 @@ async function fetchAllPages(type, studioId) {
             }
         }
 
-        if (!receivedAny) {
+        // 新しく追加された件数を取得
+        const currentCount = fetchedData[type] ? fetchedData[type].length : 0;
+
+        // データを受信したにもかかわらず、重複除外により新規件数が増えなくなった場合は終端とみなして即終了
+        if (!receivedAny || (type !== 'managers' && type !== 'curators' && currentCount === previousCount)) {
+            finished = true;
             break;
         }
 
-        nextOffset +=
-            currentParallelLimit * PAGE_SIZE;
+        nextOffset += currentParallelLimit * PAGE_SIZE;
     }
 }
 
