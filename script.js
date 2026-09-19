@@ -16,6 +16,15 @@ let fetchedData = {
     activity: []
 };
 
+// 高速・正確な重複判定を行うための Set
+let seenKeys = {
+    projects: new Set(),
+    comments: new Set(),
+    managers: new Set(),
+    curators: new Set(),
+    activity: new Set()
+};
+
 const parseStudioId = str => {
     const m =
         str.trim().match(/studios\/(\d+)/) ||
@@ -93,7 +102,7 @@ async function fetchPage(type, studioId, offset) {
 
 
 /* =========================================================
-   データ変換（重複防止機能つき）
+   データ変換（Setを使用した漏れのない高速重複防止）
    ========================================================= */
 
 function appendItems(type, items) {
@@ -104,8 +113,11 @@ function appendItems(type, items) {
     if (type === 'projects') {
 
         items.forEach(p => {
-            // プロジェクトIDで重複チェック
-            if (!fetchedData.projects.some(existing => existing.id === p.id)) {
+            if (!p || !p.id) return;
+            const key = String(p.id);
+
+            if (!seenKeys.projects.has(key)) {
+                seenKeys.projects.add(key);
                 fetchedData.projects.push({
                     id: p.id,
                     title: p.title || "",
@@ -118,18 +130,15 @@ function appendItems(type, items) {
     } else if (type === 'comments') {
 
         items.forEach(c => {
-            // 投稿者・内容・日時で重複チェック
+            if (!c) return;
             const datetimeStr = c.datetime_created ? new Date(c.datetime_created).toLocaleString() : "";
             const authorStr = c.author?.username || "匿名";
             const contentStr = c.content || "";
 
-            const isDuplicate = fetchedData.comments.some(existing => 
-                existing.username === authorStr &&
-                existing.content === contentStr &&
-                existing.datetime === datetimeStr
-            );
+            const key = `${authorStr}_${datetimeStr}_${contentStr}`;
 
-            if (!isDuplicate) {
+            if (!seenKeys.comments.has(key)) {
+                seenKeys.comments.add(key);
                 fetchedData.comments.push({
                     username: authorStr,
                     content: contentStr,
@@ -141,28 +150,26 @@ function appendItems(type, items) {
     } else if (type === 'managers' || type === 'curators') {
 
         items.forEach(m => {
-            if (m.username && !fetchedData[type].includes(m.username)) {
-                fetchedData[type].push(m.username);
+            const username = m?.username || m;
+            if (username && typeof username === 'string' && !seenKeys[type].has(username)) {
+                seenKeys[type].add(username);
+                fetchedData[type].push(username);
             }
         });
 
     } else if (type === 'activity') {
 
         items.forEach(a => {
+            if (!a) return;
             const actorStr = a.actor_username || a.actor?.username || "";
             const titleStr = a.project_title || a.title || "";
             const datetimeStr = a.datetime_created ? new Date(a.datetime_created).toLocaleString() : "";
             const typeStr = a.type || "";
 
-            // アクティビティの重複チェック（操作種別・実行者・タイトル・日時が完全一致するものを除外）
-            const isDuplicate = fetchedData.activity.some(existing => 
-                existing.type === typeStr &&
-                existing.actor === actorStr &&
-                existing.title === titleStr &&
-                existing.datetime === datetimeStr
-            );
+            const key = `${typeStr}_${actorStr}_${titleStr}_${datetimeStr}`;
 
-            if (!isDuplicate) {
+            if (!seenKeys.activity.has(key)) {
+                seenKeys.activity.add(key);
                 fetchedData.activity.push({
                     type: typeStr,
                     actor: actorStr,
@@ -176,14 +183,13 @@ function appendItems(type, items) {
 
 
 /* =========================================================
-   1種類のデータをページ単位で並列取得（並列度制御＆取り込み漏れ防止）
+   1種類のデータをページ単位で並列取得（取り込み漏れ防止版）
    ========================================================= */
 
 async function fetchAllPages(type, studioId) {
     let nextOffset = 0;
     let finished = false;
 
-    // カテゴリごとに適した並列数を設定（activity の場合は負荷軽減のため並列度を抑制）
     const currentParallelLimit = (type === 'activity') ? ACTIVITY_PARALLEL_PAGES : MAX_PARALLEL_PAGES;
 
     while (!finished && !cancelRequested) {
@@ -202,32 +208,22 @@ async function fetchAllPages(type, studioId) {
             break;
         }
 
-        let hasValidPage = false;
-
         for (let i = 0; i < results.length; i++) {
             const items = results[i];
 
-            // リクエスト失敗（null）時は次のページ確認へ
-            if (!items) {
-                continue;
+            // 応答なし（エラー等）または空配列の場合は終端と判断
+            if (!items || items.length === 0) {
+                finished = true;
+                break;
             }
 
-            // 1件以上データが存在すれば追加
-            if (items.length > 0) {
-                hasValidPage = true;
-                appendItems(type, items);
-            }
+            appendItems(type, items);
 
-            // PAGE_SIZE 未満しか返ってこなかった場合、そこが終端
+            // 返却件数が PAGE_SIZE（40件）未満ならデータは終了
             if (items.length < PAGE_SIZE) {
                 finished = true;
+                break;
             }
-        }
-
-        // 今回並列取得したページ全てで1件も有効なデータが得られなかった場合は終了
-        if (!hasValidPage) {
-            finished = true;
-            break;
         }
 
         nextOffset += currentParallelLimit * PAGE_SIZE;
@@ -282,6 +278,7 @@ async function startExtraction() {
     document.getElementById('cancelBtn')
         .classList.remove('hidden');
 
+    // データおよび初期化用 Set のリセット
     fetchedData = {
         meta: {
             id: sId,
@@ -292,6 +289,14 @@ async function startExtraction() {
         managers: [],
         curators: [],
         activity: []
+    };
+
+    seenKeys = {
+        projects: new Set(),
+        comments: new Set(),
+        managers: new Set(),
+        curators: new Set(),
+        activity: new Set()
     };
 
     try {
