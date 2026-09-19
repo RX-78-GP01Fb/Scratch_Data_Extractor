@@ -23,13 +23,12 @@ const resetForm = () => { document.getElementById('studioIdInput').value = ''; s
 async function startExtraction() {
     if (isFetching) return;
     const sId = parseStudioId(document.getElementById('studioIdInput').value);
-    if (!sId) return alert('エラー: 有効なスタジオIDまたはURLを入力してください。');
+    if (!sId) return alert('エラー: スタジオIDを入力してください。');
     const opts = ['Projects', 'Comments', 'Members', 'Activity'].reduce((a, k) => ({ ...a, [k.toLowerCase()]: document.getElementById(`chk${k}`).checked }), {});
     if (!Object.values(opts).some(Boolean)) return alert('エラー: 取得項目を選択してください。');
 
     isFetching = true; cancelRequested = false;
-    document.getElementById('fetchBtn').disabled = true;
-    document.getElementById('cancelBtn').classList.remove('hidden');
+    document.getElementById('fetchBtn').disabled = true; document.getElementById('cancelBtn').classList.remove('hidden');
     fetchedData = { meta: { id: sId, fetchedAt: new Date().toISOString() }, projects: [], comments: [], managers: [], curators: [], activity: [] };
 
     try {
@@ -43,22 +42,19 @@ async function startExtraction() {
         if (opts.members) { tasks.push('managers'); tasks.push('curators'); }
         if (opts.activity) tasks.push('activity');
 
-        let done = 0;
-        for (const t of tasks) {
-            if (cancelRequested) break;
+        setProgress(10, "データ並列取得を開始...");
+        await Promise.all(tasks.map(async (t) => {
             let offset = 0, hasMore = true;
             while (hasMore && !cancelRequested) {
-                setProgress(10 + (done * (90 / tasks.length)), `${t} 取得中: ${fetchedData[t].length}件...`);
                 const items = await fetch(`${API_BASE}/studios/${sId}/${t}?limit=40&offset=${offset}`).then(r => r.ok ? r.json() : []);
-                if (!items.length) { hasMore = false; break; }
+                if (!items.length || cancelRequested) { hasMore = false; break; }
                 if (t === 'projects') items.forEach(p => fetchedData.projects.push({ id: p.id, title: p.title || "", url: `https://scratch.mit.edu/projects/${p.id}/`, actor: p.actor?.username || "" }));
                 else if (t === 'comments') items.forEach(c => fetchedData.comments.push({ username: c.author?.username || "匿名", content: c.content || "", datetime: c.datetime_created ? new Date(c.datetime_created).toLocaleString() : "" }));
                 else if (t === 'managers' || t === 'curators') items.forEach(m => fetchedData[t].push(m.username));
                 else if (t === 'activity') items.forEach(a => fetchedData.activity.push({ type: a.type || "", actor: a.actor_username || a.actor?.username || "", title: a.project_title || a.title || "", datetime: a.datetime_created ? new Date(a.datetime_created).toLocaleString() : "" }));
                 offset += 40;
             }
-            done++;
-        }
+        }));
         setProgress(100, cancelRequested ? "中断されました。" : "データ取得完了！");
         renderUI();
     } catch (e) {
