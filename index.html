@@ -1,145 +1,212 @@
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Scratch Data Extractor</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scratch Data Extractor</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
 </head>
+
 <body class="w-screen h-screen overflow-hidden flex flex-col m-0 p-0">
-    <div class="win-outset w-full h-full flex flex-col min-h-0">
-        <div class="win-titlebar">
-            <div class="flex items-center gap-1.5 text-xs">
-                <i class="fa-solid fa-compact-disc text-amber-300"></i>
-                <span>Scratch Data Extractor</span>
-            </div>
-            <div class="flex items-center gap-1">
-                <button class="win-title-btn" onclick="alert('Scratch Data Extractor')">?</button>
-                <button class="win-title-btn" onclick="location.reload()">_</button>
-                <button class="win-title-btn" onclick="location.reload()">×</button>
-            </div>
-        </div>
-        <div class="flex items-center gap-3 px-2 py-1 bg-[#c0c0c0] border-b border-[#808080] text-xs">
-            <span class="hover:bg-[#000080] hover:text-white px-1.5 py-0.5 cursor-pointer" onclick="document.getElementById('studioIdInput').focus()">ファイル(F)</span>
-            <span class="hover:bg-[#000080] hover:text-white px-1.5 py-0.5 cursor-pointer" onclick="downloadCombinedCsv()">データ出力(E)</span>
-            <span class="hover:bg-[#000080] hover:text-white px-1.5 py-0.5 cursor-pointer" onclick="resetForm()">クリア(C)</span>
-            <span class="hover:bg-[#000080] hover:text-white px-1.5 py-0.5 cursor-pointer" onclick="alert('ヘルプ')">ヘルプ(H)</span>
-        </div>
-        <div class="p-3 flex-1 flex flex-col gap-3 min-h-0">
-            <fieldset class="win-outset p-3 relative">
-                <legend class="text-xs font-bold px-1 bg-[#c0c0c0] -top-2.5 left-2 absolute">スタジオ指定と設定</legend>
-                <div class="grid grid-cols-1 lg:grid-cols-12 gap-3 items-center mt-1">
-                    <div class="lg:col-span-6 flex flex-col gap-1">
-                        <label for="studioIdInput" class="text-xs font-bold">スタジオID または URL:</label>
-                        <div class="flex gap-2">
-                            <input type="text" id="studioIdInput" placeholder="例: 32832822" class="win-inset flex-1 px-2 py-1 text-xs outline-none focus:bg-yellow-50 font-mono">
-                            <button class="win-btn" onclick="document.getElementById('studioIdInput').value=''">消去</button>
-                        </div>
-                    </div>
-                    <div class="lg:col-span-4 flex flex-wrap gap-x-3 gap-y-1 bg-[#c0c0c0] p-1 border border-gray-400">
-                        <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" id="chkProjects" checked class="accent-[#000080]"><span>プロジェクト</span></label>
-                        <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" id="chkComments" checked class="accent-[#000080]"><span>コメント</span></label>
-                        <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" id="chkMembers" checked class="accent-[#000080]"><span>メンバー</span></label>
-                        <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" id="chkActivity" checked class="accent-[#000080]"><span>活動ログ</span></label>
-                    </div>
-                    <div class="lg:col-span-2 flex gap-1">
-                        <button id="fetchBtn" class="win-btn w-full py-2 text-xs font-bold" onclick="startExtraction()"><i class="fa-solid fa-play text-green-700"></i><span>一括取得</span></button>
-                        <button id="cancelBtn" class="win-btn py-2 text-xs font-bold hidden" onclick="cancelFetch()"><span>中止</span></button>
-                    </div>
-                </div>
-            </fieldset>
-            <div class="win-outset p-2 flex flex-col gap-1">
-                <div class="flex justify-between items-center text-xs font-mono">
-                    <span id="progressStatusText" class="truncate font-bold">状態: 準備完了</span>
-                    <span id="progressPercentText" class="font-bold text-[#000080]">0%</span>
-                </div>
-                <div class="retro-progress-container"><div id="retroProgressBar" class="retro-progress-fill"></div></div>
-            </div>
-            <div class="flex flex-wrap items-center justify-between gap-2 bg-[#c0c0c0] p-1 border-b border-gray-400">
-                <div class="text-xs font-bold flex items-center gap-1"><i class="fa-solid fa-database text-blue-800"></i><span>抽出データ表示</span><span id="studioBadge" class="bg-white px-2 py-0.5 border border-gray-500 font-mono text-[10px] hidden"></span></div>
-                <div class="flex items-center gap-1">
-                    <button id="btnExportJson" class="win-btn" disabled onclick="downloadJson()"><i class="fa-solid fa-file-code"></i> JSON保存</button>
-                    <button id="btnExportCsv" class="win-btn" disabled onclick="downloadCombinedCsv()"><i class="fa-solid fa-file-csv"></i> 全統合CSV</button>
-                    <button id="btnCopyClipboard" class="win-btn" disabled onclick="copyJsonToClipboard()"><i class="fa-solid fa-copy"></i> JSONコピー</button>
-                </div>
-            </div>
-            <div class="flex-1 flex flex-col min-h-0">
-                <div class="flex items-end px-1" id="tabHeaderGroup">
-                    <button class="win-tab-btn active" onclick="switchTab('summary')" id="tab-summary">概要</button>
-                    <button class="win-tab-btn" onclick="switchTab('projects')" id="tab-projects">プロジェクト (0)</button>
-                    <button class="win-tab-btn" onclick="switchTab('comments')" id="tab-comments">コメント (0)</button>
-                    <button class="win-tab-btn" onclick="switchTab('members')" id="tab-members">メンバー (0)</button>
-                    <button class="win-tab-btn" onclick="switchTab('activity')" id="tab-activity">活動内容 (0)</button>
-                </div>
-                <div class="win-inset flex-1 p-2 overflow-auto bg-white min-h-0">
-                    <div id="view-summary" class="tab-view space-y-4 text-xs">
-                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                            <div class="win-inset-panel p-2"><div>プロジェクト数:</div><div id="statProjects" class="text-lg font-bold text-blue-900 font-mono">0</div></div>
-                            <div class="win-inset-panel p-2"><div>コメント総数:</div><div id="statComments" class="text-lg font-bold text-purple-900 font-mono">0</div></div>
-                            <div class="win-inset-panel p-2"><div>メンバー:</div><div id="statMembers" class="text-lg font-bold text-amber-800 font-mono">0 / 0</div></div>
-                            <div class="win-inset-panel p-2"><div>活動履歴:</div><div id="statActivity" class="text-lg font-bold text-green-900 font-mono">0</div></div>
-                        </div>
-                        <div class="win-outset p-3 space-y-2">
-                            <h3 class="font-bold border-b border-gray-400 pb-1">スタジオ詳細情報</h3>
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 font-mono">
-                                <div><b>タイトル:</b> <span id="metaTitle">-</span></div>
-                                <div><b>オーナー:</b> <span id="metaOwner">-</span></div>
-                                <div><b>スタジオID:</b> <span id="metaId">-</span></div>
-                                <div><b>データ取得日時:</b> <span id="metaTime">-</span></div>
-                            </div>
-                            <div class="pt-2"><b>概要・説明:</b><div id="metaDesc" class="win-inset p-2 mt-1 whitespace-pre-wrap max-h-32 overflow-y-auto font-sans bg-gray-50">-</div></div>
-                        </div>
-                    </div>
-                    <div id="view-projects" class="tab-view hidden space-y-2">
-                        <div class="flex justify-between items-center text-xs"><span>登録プロジェクト一覧</span><button class="win-btn text-[10px]" onclick="downloadSectionCsv('projects')">CSV出力</button></div>
-                        <div class="win-inset overflow-auto flex-1 min-h-0">
-                            <table class="w-full text-xs retro-table font-mono">
-                                <thead><tr><th class="w-20">ID</th><th>作品タイトル</th><th class="w-32">追加者</th><th class="w-20 text-center">リンク</th></tr></thead>
-                                <tbody id="tableProjectsBody"><tr><td colspan="4" class="text-center text-gray-500 py-4">データなし</td></tr></tbody>
-                            </table>
-                        </div>
-                    </div>
-                    <div id="view-comments" class="tab-view hidden space-y-2">
-                        <div class="flex justify-between items-center text-xs"><span>スタジオコメント一覧</span><button class="win-btn text-[10px]" onclick="downloadSectionCsv('comments')">CSV出力</button></div>
-                        <div class="win-inset overflow-auto flex-1 min-h-0">
-                            <table class="w-full text-xs retro-table font-sans">
-                                <thead><tr><th class="w-32">投稿者</th><th>コメント内容</th><th class="w-36">日時</th></tr></thead>
-                                <tbody id="tableCommentsBody"><tr><td colspan="3" class="text-center text-gray-500 py-4">データなし</td></tr></tbody>
-                            </table>
-                        </div>
-                    </div>
-                    <div id="view-members" class="tab-view hidden space-y-2">
-                        <div class="flex justify-between items-center text-xs"><span>所属メンバー</span><button class="win-btn text-[10px]" onclick="downloadSectionTxt('members')">TXT出力</button></div>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs flex-1 min-h-0">
-                            <div class="win-outset p-2 space-y-2 flex flex-col min-h-0">
-                                <div class="font-bold border-b border-gray-400 pb-1 flex justify-between"><span>マネージャー</span><span id="cntManagers" class="font-mono">0名</span></div>
-                                <div id="listManagers" class="win-inset p-1 flex-1 overflow-y-auto space-y-1 font-mono"></div>
-                            </div>
-                            <div class="win-outset p-2 space-y-2 flex flex-col min-h-0">
-                                <div class="font-bold border-b border-gray-400 pb-1 flex justify-between"><span>キュレーター</span><span id="cntCurators" class="font-mono">0名</span></div>
-                                <div id="listCurators" class="win-inset p-1 flex-1 overflow-y-auto space-y-1 font-mono"></div>
-                            </div>
-                        </div>
-                    </div>
-                    <div id="view-activity" class="tab-view hidden space-y-2">
-                        <div class="flex justify-between items-center text-xs"><span>アクティビティログ</span><button class="win-btn text-[10px]" onclick="downloadSectionCsv('activity')">CSV出力</button></div>
-                        <div class="win-inset overflow-auto flex-1 min-h-0">
-                            <table class="w-full text-xs retro-table font-sans">
-                                <thead><tr><th class="w-24">操作</th><th class="w-32">実行者</th><th>対象</th><th class="w-36">日時</th></tr></thead>
-                                <tbody id="tableActivityBody"><tr><td colspan="4" class="text-center text-gray-500 py-4">データなし</td></tr></tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="flex items-center gap-2 p-1 bg-[#c0c0c0] text-xs">
-            <div class="win-inset-panel px-2 py-0.5 flex-1 truncate font-mono" id="statusBarText">準備完了.</div>
-            <div class="win-inset-panel px-2 py-0.5 w-32 text-center font-mono" id="statusBarCount">Items: 0</div>
-        </div>
+  <div class="win-outset w-full h-full flex flex-col min-h-0">
+    <div class="win-titlebar">
+      <div class="flex items-center gap-1.5 text-xs">
+        <i class="fa-solid fa-compact-disc text-amber-300"></i>
+        <span>Scratch Data Extractor</span>
+      </div>
+      <div class="flex items-center gap-1">
+        <button class="win-title-btn" onclick="alert('Scratch Data Extractor')">?</button>
+        <button class="win-title-btn" onclick="location.reload()">_</button>
+        <button class="win-title-btn" onclick="location.reload()">×</button>
+      </div>
     </div>
-    <script src="script.js" defer></script>
+    <div class="flex items-center gap-3 px-2 py-1 bg-[#c0c0c0] border-b border-[#808080] text-xs">
+      <span class="hover:bg-[#000080] hover:text-white px-1.5 py-0.5 cursor-pointer" onclick="document.getElementById('studioIdInput').focus()">ファイル(F)</span>
+      <span class="hover:bg-[#000080] hover:text-white px-1.5 py-0.5 cursor-pointer" onclick="downloadCombinedCsv()">データ出力(E)</span>
+      <span class="hover:bg-[#000080] hover:text-white px-1.5 py-0.5 cursor-pointer" onclick="resetForm()">クリア(C)</span>
+      <span class="hover:bg-[#000080] hover:text-white px-1.5 py-0.5 cursor-pointer" onclick="alert('ヘルプ')">ヘルプ(H)</span>
+    </div>
+    <div class="p-3 flex-1 flex flex-col gap-3 min-h-0">
+      <fieldset class="win-outset p-3 relative">
+        <legend class="text-xs font-bold px-1 bg-[#c0c0c0] -top-2.5 left-2 absolute">スタジオ指定と設定</legend>
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-3 items-center mt-1">
+          <div class="lg:col-span-6 flex flex-col gap-1">
+            <label for="studioIdInput" class="text-xs font-bold">スタジオID または URL:</label>
+            <div class="flex gap-2">
+              <input type="text" id="studioIdInput" placeholder="例: 32832822" class="win-inset flex-1 px-2 py-1 text-xs outline-none focus:bg-yellow-50 font-mono">
+              <button class="win-btn" onclick="document.getElementById('studioIdInput').value=''">消去</button>
+            </div>
+          </div>
+          <div class="lg:col-span-4 flex flex-wrap gap-x-3 gap-y-1 bg-[#c0c0c0] p-1 border border-gray-400">
+            <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" id="chkProjects" checked class="accent-[#000080]"><span>プロジェクト</span></label>
+            <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" id="chkComments" checked class="accent-[#000080]"><span>コメント</span></label>
+            <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" id="chkMembers" checked class="accent-[#000080]"><span>メンバー</span></label>
+            <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" id="chkActivity" checked class="accent-[#000080]"><span>活動ログ</span></label>
+          </div>
+          <div class="lg:col-span-2 flex gap-1">
+            <button id="fetchBtn" class="win-btn w-full py-2 text-xs font-bold" onclick="startExtraction()"><i class="fa-solid fa-play text-green-700"></i><span>一括取得</span></button>
+            <button id="cancelBtn" class="win-btn py-2 text-xs font-bold hidden" onclick="cancelFetch()"><span>中止</span></button>
+          </div>
+        </div>
+      </fieldset>
+      <div class="win-outset p-2 flex flex-col gap-1">
+        <div class="flex justify-between items-center text-xs font-mono">
+          <span id="progressStatusText" class="truncate font-bold">状態: 準備完了</span>
+          <span id="progressPercentText" class="font-bold text-[#000080]">0%</span>
+        </div>
+        <div class="retro-progress-container">
+          <div id="retroProgressBar" class="retro-progress-fill"></div>
+        </div>
+      </div>
+      <div class="flex flex-wrap items-center justify-between gap-2 bg-[#c0c0c0] p-1 border-b border-gray-400">
+        <div class="text-xs font-bold flex items-center gap-1">
+          <i class="fa-solid fa-database text-blue-800"></i><span>抽出データ表示</span><span id="studioBadge" class="bg-white px-2 py-0.5 border border-gray-500 font-mono text-[10px] hidden"></span>
+        </div>
+        <div class="flex items-center gap-1">
+          <button id="btnExportJson" class="win-btn" disabled onclick="downloadJson()"><i class="fa-solid fa-file-code"></i> JSON保存</button>
+          <button id="btnExportCsv" class="win-btn" disabled onclick="downloadCombinedCsv()"><i class="fa-solid fa-file-csv"></i> 全統合CSV</button>
+          <button id="btnCopyClipboard" class="win-btn" disabled onclick="copyJsonToClipboard()"><i class="fa-solid fa-copy"></i> JSONコピー</button>
+        </div>
+      </div>
+      <div class="flex-1 flex flex-col min-h-0">
+        <div class="flex items-end px-1" id="tabHeaderGroup">
+          <button class="win-tab-btn active" onclick="switchTab('summary')" id="tab-summary">概要</button>
+          <button class="win-tab-btn" onclick="switchTab('projects')" id="tab-projects">プロジェクト (0)</button>
+          <button class="win-tab-btn" onclick="switchTab('comments')" id="tab-comments">コメント (0)</button>
+          <button class="win-tab-btn" onclick="switchTab('members')" id="tab-members">メンバー (0)</button>
+          <button class="win-tab-btn" onclick="switchTab('activity')" id="tab-activity">活動内容 (0)</button>
+        </div>
+        <div class="win-inset flex-1 p-2 overflow-auto bg-white min-h-0">
+          <div id="view-summary" class="tab-view space-y-4 text-xs">
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              <div class="win-inset-panel p-2">
+                <div>プロジェクト数:</div>
+                <div id="statProjects" class="text-lg font-bold text-blue-900 font-mono">0</div>
+              </div>
+              <div class="win-inset-panel p-2">
+                <div>コメント総数:</div>
+                <div id="statComments" class="text-lg font-bold text-purple-900 font-mono">0</div>
+              </div>
+              <div class="win-inset-panel p-2">
+                <div>メンバー:</div>
+                <div id="statMembers" class="text-lg font-bold text-amber-800 font-mono">0 / 0</div>
+              </div>
+              <div class="win-inset-panel p-2">
+                <div>活動履歴:</div>
+                <div id="statActivity" class="text-lg font-bold text-green-900 font-mono">0</div>
+              </div>
+            </div>
+            <!-- ★スタジオ詳細カードを画面下端まで引き伸ばすためのクラス（flex-1 flex flex-col min-h-0）を追加 -->
+            <div class="win-outset p-3 space-y-2 flex-1 flex flex-col min-h-0">
+              <h3 class="font-bold border-b border-gray-400 pb-1">スタジオ詳細情報</h3>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 font-mono">
+                <div><b>タイトル:</b> <span id="metaTitle">-</span></div>
+                <div><b>オーナー:</b> <span id="metaOwner">-</span></div>
+                <div><b>スタジオID:</b> <span id="metaId">-</span></div>
+                <div><b>データ取得日時:</b> <span id="metaTime">-</span></div>
+              </div>
+              <!-- ★概要・説明を囲む枠を縦に引き伸ばし、さらにその中の文章枠（metaDesc）をflex-1で最大化（max-h-32は解除） -->
+              <div class="pt-2 flex-1 flex flex-col min-h-0">
+                <b>概要・説明:</b>
+                <div id="metaDesc"
+                  class="win-inset p-2 mt-1 whitespace-pre-wrap flex-1 overflow-y-auto font-sans bg-gray-50">-</div>
+              </div>
+            </div>
+          </div>
+          <div id="view-projects" class="tab-view hidden space-y-2">
+            <div class="flex justify-between items-center text-xs">
+              <span>登録プロジェクト一覧</span><button class="win-btn text-[10px]" onclick="downloadSectionCsv('projects')">CSV出力</button>
+            </div>
+            <div class="win-inset overflow-auto flex-1 min-h-0">
+              <table class="w-full text-xs retro-table font-mono">
+                <thead>
+                  <tr>
+                    <th class="w-20">ID</th>
+                    <th>作品タイトル</th>
+                    <th class="w-32">追加者</th>
+                    <th class="w-20 text-center">リンク</th>
+                  </tr>
+                </thead>
+                <tbody id="tableProjectsBody">
+                  <tr>
+                    <td colspan="4" class="text-center text-gray-500 py-4">データなし</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div id="view-comments" class="tab-view hidden space-y-2">
+            <div class="flex justify-between items-center text-xs">
+              <span>スタジオコメント一覧</span><button class="win-btn text-[10px]" onclick="downloadSectionCsv('comments')">CSV出力</button>
+            </div>
+            <div class="win-inset overflow-auto flex-1 min-h-0">
+              <table class="w-full text-xs retro-table font-sans">
+                <thead>
+                  <tr>
+                    <th class="w-32">投稿者</th>
+                    <th>コメント内容</th>
+                    <th class="w-36">日時</th>
+                  </tr>
+                </thead>
+                <tbody id="tableCommentsBody">
+                  <tr>
+                    <td colspan="3" class="text-center text-gray-500 py-4">データなし</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div id="view-members" class="tab-view hidden space-y-2">
+            <div class="flex justify-between items-center text-xs">
+              <span>所属メンバー</span><button class="win-btn text-[10px]" onclick="downloadSectionTxt('members')">TXT出力</button>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs flex-1 min-h-0">
+              <div class="win-outset p-2 space-y-2 flex flex-col min-h-0">
+                <div class="font-bold border-b border-gray-400 pb-1 flex justify-between">
+                  <span>マネージャー</span><span id="cntManagers" class="font-mono">0名</span></div>
+                <div id="listManagers" class="win-inset p-1 flex-1 overflow-y-auto space-y-1 font-mono"></div>
+              </div>
+              <div class="win-outset p-2 space-y-2 flex flex-col min-h-0">
+                <div class="font-bold border-b border-gray-400 pb-1 flex justify-between">
+                  <span>キュレーター</span><span id="cntCurators" class="font-mono">0名</span></div>
+                <div id="listCurators" class="win-inset p-1 flex-1 overflow-y-auto space-y-1 font-mono"></div>
+              </div>
+            </div>
+          </div>
+          <div id="view-activity" class="tab-view hidden space-y-2">
+            <div class="flex justify-between items-center text-xs">
+              <span>アクティビティログ</span><button class="win-btn text-[10px]" onclick="downloadSectionCsv('activity')">CSV出力</button>
+            </div>
+            <div class="win-inset overflow-auto flex-1 min-h-0">
+              <table class="w-full text-xs retro-table font-sans">
+                <thead>
+                  <tr>
+                    <th class="w-24">操作</th>
+                    <th class="w-32">実行者</th>
+                    <th>対象</th>
+                    <th class="w-36">日時</th>
+                  </tr>
+                </thead>
+                <tbody id="tableActivityBody">
+                  <tr>
+                    <td colspan="4" class="text-center text-gray-500 py-4">データなし</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="flex items-center gap-2 p-1 bg-[#c0c0c0] text-xs">
+      <div class="win-inset-panel px-2 py-0.5 flex-1 truncate font-mono" id="statusBarText">準備完了.</div>
+      <div class="win-inset-panel px-2 py-0.5 w-32 text-center font-mono" id="statusBarCount">Items: 0</div>
+    </div>
+  </div>
+  <script src="script.js" defer></script>
 </body>
+
 </html>
