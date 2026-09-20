@@ -19,7 +19,7 @@ async function fetchPage(type,studioId,offset,dateLimit="",retries=3,delay=1000)
 }
 function appendItems(type,items){
   if(!items || !items.length)return;
-  if(type==='projects')items.forEach(p=>!fetchedData.projects.some(e=>e.id===p.id)&&fetchedData.projects.push({id:p.id,title:p.title||"",url:`https://scratch.mit.edu/projects/${p.id}/`,actor:(p.actor?p.actor.username:"")}));
+  if(type==='projects')items.forEach(p=>!fetchedData.projects.some(e=>e.id===p.id)&&fetchedData.projects.push({id:p.id,title:p.title||"",url:`https://scratch.mit.edu/projects/${p.id}/`,actor:p.username||""}));
   else if(type==='comments')items.forEach(c=>{const dt=c.datetime_created?new Date(c.datetime_created).toLocaleString():"",auth=(c.author?c.author.username:"匿名"),ct=c.content||"";!fetchedData.comments.some(e=>e.username===auth&&e.content===ct&&e.datetime===dt)&&fetchedData.comments.push({username:auth,content:ct,datetime:dt})});
   else if(type==='managers'||type==='curators')items.forEach(m=>m.username&&!fetchedData[type].includes(m.username)&&fetchedData[type].push(m.username));
   else if(type==='activity')items.forEach(a=>{
