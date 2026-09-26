@@ -250,3 +250,46 @@ body {
 ::-webkit-scrollbar-corner {
     background-color: var(--win-bg);
 }
+
+/* =========================================
+   Find Explorer Style (Cyberpunk CUI)
+========================================= */
+.find-explorer-win {
+    background-color: #000000;
+    border: 2px solid #00ff00;
+    color: #00ff00;
+    font-family: 'Courier New', Courier, monospace;
+    box-shadow: 0 0 15px rgba(0, 255, 0, 0.5), inset 0 0 15px rgba(0, 255, 0, 0.5);
+    background-image: repeating-linear-gradient(
+      0deg,
+      rgba(0, 255, 0, 0.03) 0px,
+      rgba(0, 255, 0, 0.03) 1px,
+      transparent 1px,
+      transparent 2px
+    );
+}
+
+.find-explorer-input {
+    border-bottom: 2px solid #00ff00;
+    caret-color: #00ff00;
+}
+
+.find-explorer-input::placeholder {
+    color: rgba(0, 255, 0, 0.3);
+}
+
+.cyber-text {
+    text-shadow: 0 0 8px #00ff00;
+}
+
+/* 検索画面専用のスクロールバー */
+.find-explorer-win::-webkit-scrollbar {
+    width: 12px;
+}
+.find-explorer-win::-webkit-scrollbar-track {
+    background: #001100;
+}
+.find-explorer-win::-webkit-scrollbar-thumb {
+    background: #00ff00;
+    border: 1px solid #000000;
+}
