@@ -117,3 +117,102 @@ function downloadSectionCsv(sec){
   dl(new Blob([c.join("\n")],{type:'text/csv;charset=utf-8;'}),`studio_${fetchedData.meta.id}_${sec}.csv`);
 }
 const downloadSectionTxt=()=>dl(new Blob([`=== マネージャー ===\n${fetchedData.managers.join("\n")}\n\n=== キュレーター ===\n${fetchedData.curators.join("\n")}`],{type:'text/plain;charset=utf-8;'}),`studio_${fetchedData.meta.id}_members.txt`);
+
+// ==========================================
+// Find Explorer 検索機能
+// ==========================================
+
+function openSearchModal() {
+  if (fetchedData.projects.length === 0 && fetchedData.comments.length === 0 && fetchedData.activity.length === 0) {
+    alert('検索対象のデータがありません。先に「一括取得」を行ってください。');
+    return;
+  }
+  $('searchModal').classList.remove('hidden');$('searchInput').focus();
+}
+
+function closeSearchModal() {
+  $('searchModal').classList.add('hidden');$('searchResults').innerHTML = '';
+  $('searchInput').value = '';$('searchStatus').innerText = '';
+}
+
+async function executeSearch() {
+  const query = $('searchInput').value.trim().toLowerCase();
+  if (!query) return;
+  
+  const resEl = $('searchResults');
+  const statEl = $('searchStatus');
+  resEl.innerHTML = '';
+  
+  // Searching... のグリッチ演出
+  statEl.innerText = 'SEARCHING...';
+  let glitchInterval = setInterval(() => {
+    statEl.innerText = 'SEARCHING' + '.'.repeat(Math.floor(Math.random() * 4)) + ' ' + Math.random().toString(36).substring(2, 10).toUpperCase();
+  }, 50);
+
+  // 演出のためのウェイト（1.2秒）
+  await new Promise(r => setTimeout(r, 1200)); 
+  clearInterval(glitchInterval);
+  
+  // 取得済み全データから検索
+  const results = [];
+  fetchedData.projects.forEach(p => {
+    if (p.title.toLowerCase().includes(query) || p.actor.toLowerCase().includes(query)) results.push(`[PROJECT] ID:${p.id} | ${p.title} (by ${p.actor})`);
+  });
+  fetchedData.comments.forEach(c => {
+    if (c.content.toLowerCase().includes(query) || c.username.toLowerCase().includes(query)) results.push(`[COMMENT] ${c.datetime} | ${c.username}: ${c.content}`);
+  });
+  fetchedData.managers.forEach(m => {
+    if (m.toLowerCase().includes(query)) results.push(`[MANAGER] ${m}`);
+  });
+  fetchedData.curators.forEach(c => {
+    if (c.toLowerCase().includes(query)) results.push(`[CURATOR] ${c}`);
+  });
+  fetchedData.activity.forEach(a => {
+    if (a.title.toLowerCase().includes(query) || a.actor.toLowerCase().includes(query)) results.push(`[ACTIVITY] ${a.datetime} | ${a.type} by ${a.actor} -> ${a.title}`);
+  });
+
+  if (results.length === 0) {
+    statEl.innerText = '0 MATCHES FOUND.';
+    statEl.style.color = 'red';
+    resEl.innerHTML = '<div style="color:red;">NO DATA FOUND.</div>';
+    setTimeout(() => statEl.style.color = '', 2000);
+    return;
+  }
+
+  statEl.innerText = `MATCH FOUND: ${results.length} RECORDS.`;
+
+  // 1件ずつ文字をデコード（シャッフル）しながら表示するアニメーション
+  const displayLimit = 50; // 描画負荷軽減のため最大50件
+  for (let i = 0; i < Math.min(results.length, displayLimit); i++) {
+    const div = document.createElement('div');
+    resEl.appendChild(div);
+    await typeDecodeText(div, results[i]);
+    // 画面下部へ自動スクロール
+    resEl.scrollTop = resEl.scrollHeight;
+  }
+  
+  if (results.length > displayLimit) {
+    const div = document.createElement('div');
+    div.innerText = `...AND ${results.length - displayLimit} MORE RECORDS HIDDEN.`;
+    div.style.color = '#ffff00';
+    resEl.appendChild(div);
+  }
+}
+
+// 映画風：文字がランダムに切り替わりながら表示される関数
+async function typeDecodeText(element, text) {
+  let currentText = '';
+  // ダミーとして表示する文字群
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%&*+<>?';
+  
+  for (let i = 0; i < text.length; i++) {
+    // 1文字確定する前に2回ランダムな文字を表示
+    for (let j = 0; j < 2; j++) {
+      element.innerText = currentText + chars[Math.floor(Math.random() * chars.length)];
+      // 処理を少し待つ（ここで速度調整）
+      await new Promise(r => setTimeout(r, 8));
+    }
+    currentText += text[i];
+    element.innerText = currentText;
+  }
+}
