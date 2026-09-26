@@ -9,8 +9,8 @@
   <title>Scratch Data Extractor</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link rel="stylesheet" href="style_find_explorer.css">
-  <script src="script_find_explorer.js" defer></script>
+  <link rel="stylesheet" href="style.css">
+  <script src="script.js" defer></script>
 </head>
 
 <body class="w-screen h-screen overflow-hidden flex flex-col m-0 p-0">
@@ -31,7 +31,6 @@
     <!-- メニューバー -->
     <div class="flex items-center gap-3 px-2 py-1 bg-[#c0c0c0] border-b border-[#808080] text-xs">
       <span class="hover:bg-[#000080] hover:text-white px-1.5 py-0.5 cursor-pointer" onclick="document.getElementById('studioIdInput').focus()">ファイル(F)</span>
-      <span id="searchMenuItem" class="hover:bg-[#000080] hover:text-white px-1.5 py-0.5 cursor-pointer" onclick="openFindExplorer()">検索(S)</span>
       <span class="hover:bg-[#000080] hover:text-white px-1.5 py-0.5 cursor-pointer" onclick="downloadCombinedCsv()">データ出力(E)</span>
       <span class="hover:bg-[#000080] hover:text-white px-1.5 py-0.5 cursor-pointer" onclick="resetForm()">クリア(C)</span>
       <span class="hover:bg-[#000080] hover:text-white px-1.5 py-0.5 cursor-pointer" onclick="alert('ヘルプ: スタジオIDを入力して一括取得ボタンを押してください。')">ヘルプ(H)</span>
@@ -65,81 +64,6 @@
           </div>
         </div>
       </fieldset>
-
-
-
-      <!-- Find Explorer検索ウィンドウ -->
-      <div id="findExplorerOverlay" class="find-explorer-overlay hidden">
-        <div class="find-explorer-window win-outset" role="dialog" aria-modal="true" aria-labelledby="findExplorerTitle">
-          <div class="win-titlebar find-explorer-titlebar">
-            <div class="flex items-center gap-1.5 text-xs font-bold text-white">
-              <i class="fa-solid fa-magnifying-glass text-amber-300"></i>
-              <span id="findExplorerTitle">Find Explorer - 検索</span>
-            </div>
-            <div class="flex items-center gap-1">
-              <button class="win-title-btn" onclick="closeFindExplorer()" title="閉じる">×</button>
-            </div>
-          </div>
-
-          <div class="find-explorer-body">
-            <div class="find-search-main">
-              <label for="globalSearchInput" class="text-xs font-bold">検索する文字列:</label>
-              <input
-                type="search"
-                id="globalSearchInput"
-                class="win-inset find-search-input"
-                placeholder="キーワードを入力してください"
-                autocomplete="off"
-              >
-            </div>
-
-            <div class="find-search-options">
-              <label>
-                <span>検索対象:</span>
-                <select id="globalSearchTarget" class="win-inset find-select">
-                  <option value="all">すべて</option>
-                  <option value="projects">プロジェクト</option>
-                  <option value="comments">コメント</option>
-                  <option value="members">メンバー</option>
-                  <option value="activity">活動ログ</option>
-                </select>
-              </label>
-              <label class="find-check">
-                <input type="checkbox" id="globalSearchExact">
-                完全一致
-              </label>
-            </div>
-
-            <div class="find-button-row">
-              <button id="globalSearchBtn" class="win-btn px-4 py-1 text-xs font-bold" onclick="runGlobalSearch()">
-                <i class="fa-solid fa-magnifying-glass"></i> 検索開始
-              </button>
-              <button class="win-btn px-3 py-1 text-xs" onclick="clearGlobalSearch()">クリア</button>
-              <button class="win-btn px-3 py-1 text-xs" onclick="closeFindExplorer()">閉じる</button>
-            </div>
-
-            <div class="find-status-row">
-              <span id="globalSearchStatus">検索対象データ: 0件</span>
-              <span id="globalSearchResultCount">検索結果: 0件</span>
-            </div>
-
-            <div id="globalSearchResults" class="find-results win-inset hidden">
-              <table class="w-full text-xs retro-table font-sans">
-                <thead>
-                  <tr>
-                    <th class="find-type-col">種別</th>
-                    <th class="find-user-col">人物</th>
-                    <th>内容 / 対象</th>
-                    <th class="find-date-col">日時</th>
-                    <th class="find-open-col">操作</th>
-                  </tr>
-                </thead>
-                <tbody id="globalSearchResultsBody"></tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      </div>
 
       <!-- プログレスバー -->
       <div class="win-outset p-2 flex flex-col gap-1">
