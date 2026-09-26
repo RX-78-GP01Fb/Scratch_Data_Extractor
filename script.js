@@ -63,6 +63,275 @@ async function fetchAllPages(type,studioId){
     }
   }
 }
+
+// ============================================================
+// Find Explorer - 検索機能
+// ============================================================
+
+function openFindExplorer() {
+  const overlay = $("findExplorerOverlay");
+  if (!overlay) return;
+
+  overlay.classList.remove("hidden");
+  updateGlobalSearchStatus();
+
+  setTimeout(() => $("globalSearchInput").focus(), 0);
+}
+
+function closeFindExplorer() {
+  const overlay = $("findExplorerOverlay");
+  if (!overlay) return;
+
+  overlay.classList.add("hidden");
+}
+
+function getSearchDataset() {
+  const data = [];
+
+  fetchedData.projects.forEach(p => data.push({
+    type: "プロジェクト",
+    key: "projects",
+    person: p.actor || "",
+    content: `${p.title || ""} ${p.id || ""}`,
+    title: p.title || "",
+    datetime: "",
+    url: p.url || ""
+  }));
+
+  fetchedData.comments.forEach(c => data.push({
+    type: "コメント",
+    key: "comments",
+    person: c.username || "",
+    content: c.content || "",
+    title: c.content || "",
+    datetime: c.datetime || "",
+    url: ""
+  }));
+
+  [...fetchedData.managers, ...fetchedData.curators].forEach(m => data.push({
+    type: "メンバー",
+    key: "members",
+    person: m || "",
+    content: m || "",
+    title: m || "",
+    datetime: "",
+    url: ""
+  }));
+
+  fetchedData.activity.forEach(a => data.push({
+    type: "活動ログ",
+    key: "activity",
+    person: a.actor || "",
+    content: `${a.type || ""} ${a.title || ""}`,
+    title: a.title || "",
+    datetime: a.datetime || "",
+    url: ""
+  }));
+
+  return data;
+}
+
+function updateGlobalSearchStatus() {
+  const count = getSearchDataset().length;
+
+  $("globalSearchStatus").innerText =
+    `検索対象データ: ${count.toLocaleString()}件`;
+}
+
+function normalizeSearchText(value) {
+  return String(value ?? "")
+    .toLocaleLowerCase()
+    .normalize("NFKC");
+}
+
+function highlightSearchText(value, query) {
+  const text = String(value ?? "");
+
+  if (!query) return esc(text);
+
+  const normalizedQuery = normalizeSearchText(query);
+
+  if (!normalizedQuery) return esc(text);
+
+  const normalizedText = normalizeSearchText(text);
+
+  let result = "";
+  let last = 0;
+  let pos = normalizedText.indexOf(normalizedQuery);
+
+  while (pos !== -1) {
+    result += esc(text.slice(last, pos));
+
+    result +=
+      `<mark class="find-hit">` +
+      esc(text.slice(pos, pos + normalizedQuery.length)) +
+      `</mark>`;
+
+    last = pos + normalizedQuery.length;
+    pos = normalizedText.indexOf(normalizedQuery, last);
+  }
+
+  result += esc(text.slice(last));
+
+  return result;
+}
+
+function runGlobalSearch() {
+  const query = $("globalSearchInput").value.trim();
+  const target = $("globalSearchTarget").value;
+  const exact = $("globalSearchExact").checked;
+
+  const resultsBox = $("globalSearchResults");
+  const body = $("globalSearchResultsBody");
+
+  if (!query) {
+    body.innerHTML = "";
+    resultsBox.classList.add("hidden");
+
+    $("globalSearchResultCount").innerText =
+      "検索結果: 0件";
+
+    updateGlobalSearchStatus();
+    return;
+  }
+
+  const nq = normalizeSearchText(query);
+
+  const source = getSearchDataset().filter(item =>
+    target === "all" || item.key === target
+  );
+
+  const results = source.filter(item => {
+    const fields = [
+      item.person,
+      item.content,
+      item.title
+    ];
+
+    return fields.some(value => {
+      const nv = normalizeSearchText(value);
+
+      if (exact) {
+        return nv === nq;
+      }
+
+      return nv.includes(nq);
+    });
+  });
+
+  $("globalSearchResultCount").innerText =
+    `検索結果: ${results.length.toLocaleString()}件`;
+
+  if (!results.length) {
+    body.innerHTML = `
+      <tr>
+        <td colspan="5" class="find-no-result">
+          該当するデータはありません。
+        </td>
+      </tr>
+    `;
+  } else {
+    body.innerHTML = results.map(item => `
+      <tr>
+        <td class="font-bold">
+          ${esc(item.type)}
+        </td>
+
+        <td>
+          ${highlightSearchText(item.person, query)}
+        </td>
+
+        <td class="whitespace-pre-wrap">
+          ${highlightSearchText(
+            item.title || item.content,
+            query
+          )}
+        </td>
+
+        <td class="text-gray-500">
+          ${esc(item.datetime)}
+        </td>
+
+        <td class="text-center">
+          ${
+            item.url
+              ? `<a href="${esc(item.url)}"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="text-blue-800 underline">
+                    開く
+                 </a>`
+              : `<button
+                    class="win-btn find-jump-btn"
+                    onclick="jumpToSearchType('${item.key}')">
+                    表示
+                 </button>`
+          }
+        </td>
+      </tr>
+    `).join("");
+  }
+
+  resultsBox.classList.remove("hidden");
+}
+
+function clearGlobalSearch() {
+  $("globalSearchInput").value = "";
+  $("globalSearchTarget").value = "all";
+  $("globalSearchExact").checked = false;
+
+  $("globalSearchResultsBody").innerHTML = "";
+
+  $("globalSearchResults").classList.add("hidden");
+
+  $("globalSearchResultCount").innerText =
+    "検索結果: 0件";
+
+  updateGlobalSearchStatus();
+}
+
+function jumpToSearchType(type) {
+  closeFindExplorer();
+
+  switchTab(type);
+
+  const tab = $(`tab-${type}`);
+
+  if (tab) {
+    tab.focus();
+  }
+}
+
+function initGlobalSearch() {
+  updateGlobalSearchStatus();
+
+  $("globalSearchInput").addEventListener("keydown", event => {
+    if (event.key === "Enter") {
+      runGlobalSearch();
+    }
+
+    if (event.key === "Escape") {
+      if ($("globalSearchInput").value.trim()) {
+        clearGlobalSearch();
+      } else {
+        closeFindExplorer();
+      }
+    }
+  });
+
+  $("globalSearchTarget").addEventListener("change", () => {
+    if ($("globalSearchInput").value.trim()) {
+      runGlobalSearch();
+    }
+  });
+
+  $("globalSearchExact").addEventListener("change", () => {
+    if ($("globalSearchInput").value.trim()) {
+      runGlobalSearch();
+    }
+  });
+}
+
 async function startExtraction(){
   if(isFetching)return;const sId=parseStudioId($('studioIdInput').value);if(!sId)return alert('エラー: スタジオIDを入力してください。');
   const opts=['Projects','Comments','Members','Activity'].reduce((a,k)=>({...a,[k.toLowerCase()]:$(`chk${k}`).checked}),{});
