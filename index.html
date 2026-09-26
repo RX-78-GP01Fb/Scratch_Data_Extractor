@@ -33,6 +33,7 @@
       <span class="hover:bg-[#000080] hover:text-white px-1.5 py-0.5 cursor-pointer" onclick="document.getElementById('studioIdInput').focus()">ファイル(F)</span>
       <span class="hover:bg-[#000080] hover:text-white px-1.5 py-0.5 cursor-pointer" onclick="downloadCombinedCsv()">データ出力(E)</span>
       <span class="hover:bg-[#000080] hover:text-white px-1.5 py-0.5 cursor-pointer" onclick="resetForm()">クリア(C)</span>
+      <span class="hover:bg-[#000080] hover:text-white px-1.5 py-0.5 cursor-pointer font-bold text-green-700" onclick="openSearchModal()">検索(S)</span>
       <span class="hover:bg-[#000080] hover:text-white px-1.5 py-0.5 cursor-pointer" onclick="alert('ヘルプ: スタジオIDを入力して一括取得ボタンを押してください。')">ヘルプ(H)</span>
     </div>
 
@@ -245,6 +246,21 @@
       <div class="win-inset-panel px-2 py-0.5 w-32 text-center font-mono" id="statusBarCount">Items: 0</div>
     </div>
   </div>
+  <!-- ↓↓↓ ここから Find Explorer モーダル ↓↓↓ -->
+  <div id="searchModal" class="fixed inset-0 bg-black/80 hidden flex items-center justify-center z-50">
+    <div class="find-explorer-win w-11/12 max-w-3xl h-3/4 flex flex-col relative p-6">
+      <button class="absolute top-2 right-4 text-[#00ff00] hover:text-white font-bold text-xl" onclick="closeSearchModal()">[X]</button>
+      <div class="text-center text-3xl font-bold mb-6 tracking-widest cyber-text">FIND EXPLORER</div>
+      <div class="flex gap-2 mb-4 text-lg items-center">
+        <span class="text-[#00ff00] font-bold">QUERY></span>
+        <input type="text" id="searchInput" class="find-explorer-input flex-1 bg-black text-[#00ff00] outline-none font-bold" autocomplete="off" placeholder="検索キーワードを入力してEnter..." onkeypress="if(event.key==='Enter') executeSearch()">
+      </div>
+      <div id="searchStatus" class="mb-4 h-6 text-sm font-bold cyber-text"></div>
+      <div id="searchResults" class="flex-1 overflow-auto space-y-1 text-sm font-bold"></div>
+    </div>
+  </div>
+  <!-- ↑↑↑ ここまで ↑↑↑ -->
+</body>
 </body>
 
 </html>
