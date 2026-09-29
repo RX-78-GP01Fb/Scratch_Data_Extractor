@@ -1,27 +1,23 @@
-const CACHE_NAME = "quadratic-app-v1";
-const urlsToCache = [
+const CACHE_NAME = "Scratch Data Extractor";
+const ASSETS = [
   "/",
   "/index.html",
   "/style.css",
   "/script.js",
   "/icon-192.png",
-  "/icon-512.png"
+  "/icon-512.png",
 ];
 
-// インストール時にキャッシュ
-self.addEventListener("install", (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(urlsToCache);
-    })
+// アプリのインストール時にファイルをキャッシュ
+self.addEventListener("install", (e) => {
+  e.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS))
   );
 });
 
-// リクエスト時（オフライン対応）
-self.addEventListener("fetch", (event) => {
-  event.respondWith(
-    caches.match(event.request).then((response) => {
-      return response || fetch(event.request);
-    })
+// オフライン時はキャッシュからアセットを読み込み
+self.addEventListener("fetch", (e) => {
+  e.respondWith(
+    caches.match(e.request).then((response) => response || fetch(e.request))
   );
 });
