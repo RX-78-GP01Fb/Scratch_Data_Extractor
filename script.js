@@ -79,7 +79,7 @@ async function startExtraction(){
   finally{isFetching=false;$('fetchBtn').disabled=false;$('cancelBtn').classList.add('hidden')}
 }
 function renderUI(){
-  ['btnExportJson','btnExportCsv','btnCopyClipboard'].forEach(id=>$(id).disabled=false);
+  ['btnExportJson','btnExportCsv','btnCopyClipboard','btnFindExpress'].forEach(id=>$(id).disabled=false);
   $('studioBadge').innerText=`ID: ${fetchedData.meta.id}`;$('studioBadge').classList.remove('hidden');
   document.querySelector('.win-titlebar span').innerText=`Scratch Data Extractor - [${fetchedData.meta.title}]`;
   $('tab-projects').innerText=`プロジェクト (${fetchedData.projects.length})`;$('tab-comments').innerText=`コメント (${fetchedData.comments.length})`;
@@ -117,3 +117,146 @@ function downloadSectionCsv(sec){
   dl(new Blob([c.join("\n")],{type:'text/csv;charset=utf-8;'}),`studio_${fetchedData.meta.id}_${sec}.csv`);
 }
 const downloadSectionTxt=()=>dl(new Blob([`=== マネージャー ===\n${fetchedData.managers.join("\n")}\n\n=== キュレーター ===\n${fetchedData.curators.join("\n")}`],{type:'text/plain;charset=utf-8;'}),`studio_${fetchedData.meta.id}_members.txt`);
+
+
+/* ============================================================
+   Find Express-style search
+   - 取得済みデータだけを対象に全文検索
+   - 結果から該当タブへ移動し、該当行を一時強調
+   ============================================================ */
+let findExpressLastQuery="";
+const findExpressOverlay=()=>$('findExpressOverlay');
+
+function openFindExpress(){
+  if(!fetchedData.meta || !fetchedData.meta.id){
+    alert('先にスタジオデータを取得してください。');
+    return;
+  }
+  const overlay=findExpressOverlay();
+  overlay.classList.remove('hidden');
+  overlay.setAttribute('aria-hidden','false');
+  $('findExpressSearching').classList.add('hidden');
+  $('findExpressResult').classList.add('hidden');
+  $('findExpressProgress').style.width='0%';
+  $('findExpressInput').value=findExpressLastQuery;
+  setTimeout(()=>{
+    $('findExpressInput').focus();
+    $('findExpressInput').select();
+  },0);
+}
+
+function closeFindExpress(){
+  const overlay=findExpressOverlay();
+  overlay.classList.add('hidden');
+  overlay.setAttribute('aria-hidden','true');
+  $('findExpressSearching').classList.add('hidden');
+  $('findExpressResult').classList.add('hidden');
+  $('findExpressProgress').style.width='0%';
+}
+
+const findExpressSleep=ms=>new Promise(r=>setTimeout(r,ms));
+const findExpressText=value=>value==null?'':String(value).toLocaleLowerCase('ja-JP');
+
+function findExpressPush(results,category,label,tab,fields,record,index){
+  const haystack=fields.map(findExpressText).join('\n');
+  const query=findExpressText(findExpressLastQuery);
+  if(query && haystack.includes(query)) results.push({category,label,tab,record,index});
+}
+
+async function runFindExpress(){
+  const input=$('findExpressInput');
+  const query=input.value.trim();
+  if(!query){input.focus();return;}
+
+  findExpressLastQuery=query;
+  $('findExpressSearchBtn').disabled=true;
+  $('findExpressOkBtn').disabled=true;
+  $('findExpressResult').classList.add('hidden');
+  $('findExpressSearching').classList.remove('hidden');
+  $('findExpressProgress').style.width='0%';
+
+  const results=[];
+  const totalSteps=6;
+  let step=0;
+  const progress=async label=>{
+    step++;
+    $('findExpressProgress').style.width=`${Math.round(step/totalSteps*100)}%`;
+    $('findExpressTitle').innerText=`Find Express - ${label}`;
+    await findExpressSleep(45);
+  };
+
+  await progress('スタジオ情報');
+  findExpressPush(results,'スタジオ','スタジオ情報','summary',[fetchedData.meta.id,fetchedData.meta.title,fetchedData.meta.owner,fetchedData.meta.description],fetchedData.meta,0);
+
+  await progress('プロジェクト');
+  fetchedData.projects.forEach((p,i)=>findExpressPush(results,'プロジェクト',p.title||`プロジェクト ${p.id}`,'projects',[p.id,p.title,p.actor,p.url],p,i));
+
+  await progress('コメント');
+  fetchedData.comments.forEach((c,i)=>findExpressPush(results,'コメント',c.content||c.username,'comments',[c.username,c.content,c.datetime],c,i));
+
+  await progress('メンバー');
+  fetchedData.managers.forEach((m,i)=>findExpressPush(results,'マネージャー',m,'members',[m],m,i));
+  fetchedData.curators.forEach((m,i)=>findExpressPush(results,'キュレーター',m,'members',[m],m,i));
+
+  await progress('活動ログ');
+  fetchedData.activity.forEach((a,i)=>findExpressPush(results,'活動ログ',a.title||a.type,'activity',[a.type,a.actor,a.title,a.datetime],a,i));
+
+  await progress('照合完了');
+  $('findExpressSearching').classList.add('hidden');
+  $('findExpressResult').classList.remove('hidden');
+  $('findExpressSearchBtn').disabled=false;
+  $('findExpressOkBtn').disabled=false;
+  $('findExpressTitle').innerText='Find Express';
+  $('findExpressResultCount').innerText=`${results.length}件該当`;
+
+  const list=$('findExpressResultList');
+  if(!results.length){
+    list.innerHTML='<div class="find-express-no-result">該当するデータはありません。</div>';
+    window._findExpressResults=[];
+    return;
+  }
+
+  list.innerHTML=results.slice(0,100).map((r,i)=>
+    `<button class="find-express-result-item" onclick="jumpToFindExpressResult(${i})">`+
+    `<span class="find-express-result-category">${esc(r.category)}</span>`+
+    `<span class="find-express-result-label">${esc(r.label)}</span>`+
+    `</button>`
+  ).join('')+(results.length>100?`<div class="find-express-result-more">表示は先頭100件までです（全${results.length}件）。</div>`:'');
+
+  window._findExpressResults=results;
+}
+
+function jumpToFindExpressResult(index){
+  const results=window._findExpressResults||[];
+  const r=results[index];
+  if(!r)return;
+  closeFindExpress();
+  switchTab(r.tab);
+
+  let target=null;
+  if(r.tab==='projects') target=$('tableProjectsBody').children[r.index];
+  else if(r.tab==='comments') target=$('tableCommentsBody').children[r.index];
+  else if(r.tab==='activity') target=$('tableActivityBody').children[r.index];
+  else if(r.tab==='members'){
+    const listId=r.category==='マネージャー'?'listManagers':'listCurators';
+    target=$(listId).children[r.index];
+  } else target=$('view-summary');
+
+  if(target){
+    target.classList.add('find-express-hit');
+    target.scrollIntoView({behavior:'smooth',block:'center'});
+    setTimeout(()=>target.classList.remove('find-express-hit'),1800);
+  }
+}
+
+document.addEventListener('keydown',e=>{
+  if(e.ctrlKey && e.key.toLowerCase()==='f'){
+    e.preventDefault();
+    openFindExpress();
+  }
+  if(e.key==='Escape' && !findExpressOverlay().classList.contains('hidden')) closeFindExpress();
+  if(e.key==='Enter' && document.activeElement===$('findExpressInput') && !$('findExpressSearchBtn').disabled){
+    e.preventDefault();
+    runFindExpress();
+  }
+});
