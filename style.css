@@ -282,7 +282,19 @@ body {
 .find-express-result-label { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .find-express-result-more,.find-express-no-result { padding:12px; text-align:center; color:#404040; }
 .find-express-result-actions { display:flex; justify-content:center; margin-top:12px; }
-.find-express-hit { animation:find-express-hit 1.8s steps(2,end); }
-@keyframes find-express-hit { 0%,100%{background-color:inherit;color:inherit;} 25%,75%{background-color:#000080 !important;color:#fff !important;} 50%{background-color:#ffff00 !important;color:#000 !important;} }
+.find-express-hit {
+    background-color: #000080 !important;
+    color: #ffffff !important;
+}
+
+/* 検索結果から移動した箇所も、通常のマウスオーバー時と同じ配色にする */
+.retro-table tr.find-express-hit td {
+    background-color: transparent !important;
+}
+
+.retro-table tr.find-express-hit a,
+.retro-table tr.find-express-hit .comment-author {
+    color: #ffff00 !important;
+}
 @keyframes find-express-pulse { 0%,100%{opacity:1;} 50%{opacity:.35;} }
 @media (max-width:520px) { .find-express-body{padding:10px;} .find-express-input-row{flex-direction:column;} .find-express-btn{width:100%;} .find-express-searching-text{font-size:20px;} }
