@@ -263,7 +263,7 @@ document.addEventListener('keydown',e=>{
 
 if ("serviceWorker" in navigator) {
     window.addEventListener("load", () => {
-        navigator.serviceWorker.register("/sw.js")
+        navigator.serviceWorker.register("./sw.js")
             .then((reg) => console.log("サービスワーカー登録成功:", reg.scope))
             .catch((err) => console.error("サービスワーカー登録失敗:", err));
     });
