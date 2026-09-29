@@ -32,6 +32,7 @@
     <div class="flex items-center gap-3 px-2 py-1 bg-[#c0c0c0] border-b border-[#808080] text-xs">
       <span class="hover:bg-[#000080] hover:text-white px-1.5 py-0.5 cursor-pointer" onclick="document.getElementById('studioIdInput').focus()">ファイル(F)</span>
       <span class="hover:bg-[#000080] hover:text-white px-1.5 py-0.5 cursor-pointer" onclick="downloadCombinedCsv()">データ出力(E)</span>
+      <span class="hover:bg-[#000080] hover:text-white px-1.5 py-0.5 cursor-pointer" onclick="openFindExpress()">検索(S)</span>
       <span class="hover:bg-[#000080] hover:text-white px-1.5 py-0.5 cursor-pointer" onclick="resetForm()">クリア(C)</span>
       <span class="hover:bg-[#000080] hover:text-white px-1.5 py-0.5 cursor-pointer" onclick="alert('ヘルプ: スタジオIDを入力して一括取得ボタンを押してください。')">ヘルプ(H)</span>
     </div>
@@ -87,6 +88,7 @@
           <button id="btnExportJson" class="win-btn px-2 py-1" disabled onclick="downloadJson()"><i class="fa-solid fa-file-code"></i> JSON保存</button>
           <button id="btnExportCsv" class="win-btn px-2 py-1" disabled onclick="downloadCombinedCsv()"><i class="fa-solid fa-file-csv"></i> 全統合CSV</button>
           <button id="btnCopyClipboard" class="win-btn px-2 py-1" disabled onclick="copyJsonToClipboard()"><i class="fa-solid fa-copy"></i> JSONコピー</button>
+          <button id="btnFindExpress" class="win-btn px-2 py-1" disabled onclick="openFindExpress()"><i class="fa-solid fa-magnifying-glass"></i> 検索</button>
         </div>
       </div>
 
@@ -235,6 +237,43 @@
             </div>
           </div>
 
+        </div>
+      </div>
+    </div>
+
+    <!-- Find Express 検索ダイアログ -->
+    <div id="findExpressOverlay" class="find-express-overlay hidden" aria-hidden="true">
+      <div id="findExpressWindow" class="find-express-window" role="dialog" aria-modal="true" aria-labelledby="findExpressTitle">
+        <div class="find-express-titlebar">
+          <div class="flex items-center gap-1.5 font-bold">
+            <i class="fa-solid fa-magnifying-glass text-amber-300"></i>
+            <span id="findExpressTitle">Find Express</span>
+          </div>
+          <button class="find-express-title-btn" onclick="closeFindExpress()">×</button>
+        </div>
+
+        <div class="find-express-body">
+          <label for="findExpressInput" class="font-bold">検索語:</label>
+          <div class="find-express-input-row">
+            <input id="findExpressInput" class="find-express-input" type="text" autocomplete="off" spellcheck="false" placeholder="ID、タイトル、ユーザー名、コメントなど">
+            <button id="findExpressSearchBtn" class="find-express-btn" onclick="runFindExpress()">検索</button>
+          </div>
+
+          <div id="findExpressSearching" class="find-express-searching hidden">
+            <div class="find-express-search-icon"><i class="fa-regular fa-clock"></i></div>
+            <div class="find-express-searching-text">検索中...</div>
+            <div class="find-express-progress-container">
+              <div id="findExpressProgress" class="find-express-progress-fill"></div>
+            </div>
+          </div>
+
+          <div id="findExpressResult" class="find-express-result hidden">
+            <div id="findExpressResultCount" class="find-express-result-count"></div>
+            <div id="findExpressResultList" class="find-express-result-list"></div>
+            <div class="find-express-result-actions">
+              <button id="findExpressOkBtn" class="find-express-btn" onclick="closeFindExpress()">OK</button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
